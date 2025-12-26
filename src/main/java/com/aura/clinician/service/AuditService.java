@@ -28,7 +28,7 @@ public class AuditService {
     public void logFeedback(String caseId, String diseaseType, String actor, String action) {
         AuditEntry entry = baseEntry(caseId, diseaseType, actor);
         entry.setAction("FEEDBACK_RECEIVED");
-        entry.setDetails("Clinician feedback: " + action);
+        entry.setDetails("Clinician review action: " + action);
         auditRepository.append(entry);
     }
 

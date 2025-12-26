@@ -7,5 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class ClinicianBackendApplication {
     public static void main(String[] args) {
         SpringApplication.run(ClinicianBackendApplication.class, args);
+
+        System.out.println("---------------Application has been started!---------------");
     }
 }

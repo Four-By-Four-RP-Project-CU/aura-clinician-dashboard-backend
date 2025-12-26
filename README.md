@@ -19,5 +19,5 @@ HTTP Basic auth with role-based access.
 ## Endpoints
 - `GET /api/v1/cases`
 - `GET /api/v1/dashboard/{caseId}?diseaseType=CU`
-- `POST /api/v1/feedback`
+- `POST /api/v1/feedback` (clinician review action)
 - `GET /api/v1/audit/{caseId}`
