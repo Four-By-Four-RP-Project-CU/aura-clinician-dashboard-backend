@@ -13,7 +13,6 @@ public class DashboardResponse {
     private ExplanationBlock explanation;
     private List<RecommendationItem> recommendations = new ArrayList<>();
     private AuditMetadata audit;
-    private String feedbackStatus;
 
     public String getCaseId() {
         return caseId;
@@ -85,13 +84,5 @@ public class DashboardResponse {
 
     public void setAudit(AuditMetadata audit) {
         this.audit = audit;
-    }
-
-    public String getFeedbackStatus() {
-        return feedbackStatus;
-    }
-
-    public void setFeedbackStatus(String feedbackStatus) {
-        this.feedbackStatus = feedbackStatus;
     }
 }

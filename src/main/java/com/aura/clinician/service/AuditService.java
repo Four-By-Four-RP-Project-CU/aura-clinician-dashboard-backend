@@ -25,13 +25,6 @@ public class AuditService {
         return entry.getId();
     }
 
-    public void logFeedback(String caseId, String diseaseType, String actor, String action) {
-        AuditEntry entry = baseEntry(caseId, diseaseType, actor);
-        entry.setAction("FEEDBACK_RECEIVED");
-        entry.setDetails("Clinician review action: " + action);
-        auditRepository.append(entry);
-    }
-
     public List<AuditEntry> getAuditTrail(String caseId) {
         return auditRepository.findByCaseId(caseId);
     }

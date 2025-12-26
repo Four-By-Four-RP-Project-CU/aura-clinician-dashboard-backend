@@ -1,33 +1,31 @@
 package com.aura.clinician.service;
 
 import java.util.List;
-import java.util.stream.Collectors;
-
 import org.springframework.stereotype.Service;
 
 import com.aura.clinician.api.dto.CaseSummaryResponse;
-import com.aura.clinician.domain.CaseSummary;
-import com.aura.clinician.repository.CaseRepository;
+import com.aura.clinician.domain.CaseInputDocument;
+import com.aura.clinician.repository.CaseInputRepository;
 
 @Service
 public class CaseService {
-    private final CaseRepository caseRepository;
+    private final CaseInputRepository caseInputRepository;
 
-    public CaseService(CaseRepository caseRepository) {
-        this.caseRepository = caseRepository;
+    public CaseService(CaseInputRepository caseInputRepository) {
+        this.caseInputRepository = caseInputRepository;
     }
 
     public List<CaseSummaryResponse> getCases() {
-        return caseRepository.findAll().stream()
+        return caseInputRepository.findAll().stream()
             .map(this::toResponse)
-            .collect(Collectors.toList());
+            .toList();
     }
 
-    private CaseSummaryResponse toResponse(CaseSummary summary) {
+    private CaseSummaryResponse toResponse(CaseInputDocument summary) {
         CaseSummaryResponse response = new CaseSummaryResponse();
         response.setCaseId(summary.getCaseId());
-        response.setAge(summary.getAge());
-        response.setGender(summary.getGender());
+        response.setAge(summary.getPatientAge());
+        response.setGender(summary.getPatientGender());
         return response;
     }
 }
