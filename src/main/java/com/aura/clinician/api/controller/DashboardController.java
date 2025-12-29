@@ -12,16 +12,15 @@ import org.springframework.web.bind.annotation.RestController;
 import com.aura.clinician.api.dto.DashboardResponse;
 import com.aura.clinician.service.DashboardService;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/v1/dashboard")
 @Validated
+@RequiredArgsConstructor
 public class DashboardController {
     private static final Logger logger = LoggerFactory.getLogger(DashboardController.class);
     private final DashboardService dashboardService;
-
-    public DashboardController(DashboardService dashboardService) {
-        this.dashboardService = dashboardService;
-    }
 
     @GetMapping("/{caseId}")
     public DashboardResponse getDashboard(

@@ -14,19 +14,14 @@ import com.aura.clinician.domain.ShapExplanationDocument;
 import com.aura.clinician.repository.GradcamOutputRepository;
 import com.aura.clinician.repository.ShapExplanationRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Profile("mongo-explainability")
+@RequiredArgsConstructor
 public class MongoExplainabilityProvider implements ExplainabilityProvider {
     private final ShapExplanationRepository shapRepository;
     private final GradcamOutputRepository gradcamRepository;
-
-    public MongoExplainabilityProvider(
-        ShapExplanationRepository shapRepository,
-        GradcamOutputRepository gradcamRepository
-    ) {
-        this.shapRepository = shapRepository;
-        this.gradcamRepository = gradcamRepository;
-    }
 
     @Override
     public List<ShapContribution> getShap(String caseId, PatientCaseDocument patientCase) {
