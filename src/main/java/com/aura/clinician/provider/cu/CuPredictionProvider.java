@@ -10,13 +10,12 @@ import com.aura.clinician.repository.CaseInputRepository;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class CuPredictionProvider implements PredictionProvider {
     private final CaseInputRepository caseInputRepository;
-
-    public CuPredictionProvider(CaseInputRepository caseInputRepository) {
-        this.caseInputRepository = caseInputRepository;
-    }
 
     @Override
     public PredictionBlock getPrediction(String caseId) {

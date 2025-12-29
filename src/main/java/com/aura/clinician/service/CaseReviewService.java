@@ -20,7 +20,10 @@ import com.aura.clinician.repository.ClinicalReviewRepository;
 import com.aura.clinician.repository.PatientCaseRepository;
 import com.aura.clinician.service.explainability.ExplainabilityProvider;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class CaseReviewService {
     private final PatientCaseRepository patientCaseRepository;
     private final AiPredictionRepository aiPredictionRepository;
@@ -28,22 +31,6 @@ public class CaseReviewService {
     private final ExplainabilityProvider explainabilityProvider;
     private final GuidelineMapper guidelineMapper;
     private final JustificationService justificationService;
-
-    public CaseReviewService(
-        PatientCaseRepository patientCaseRepository,
-        AiPredictionRepository aiPredictionRepository,
-        ClinicalReviewRepository clinicalReviewRepository,
-        ExplainabilityProvider explainabilityProvider,
-        GuidelineMapper guidelineMapper,
-        JustificationService justificationService
-    ) {
-        this.patientCaseRepository = patientCaseRepository;
-        this.aiPredictionRepository = aiPredictionRepository;
-        this.clinicalReviewRepository = clinicalReviewRepository;
-        this.explainabilityProvider = explainabilityProvider;
-        this.guidelineMapper = guidelineMapper;
-        this.justificationService = justificationService;
-    }
 
     public ClinicalReviewDocument applyReview(String caseId, String finalStatus, String comment) {
         PatientCaseDocument patientCase = patientCaseRepository.findByCaseId(caseId)
@@ -68,7 +55,6 @@ public class CaseReviewService {
             .toList();
 
         var gradCam = explainabilityProvider.getGradcam(caseId, patientCase);
-        boolean shapAvailable = shapContributions != null && !shapContributions.isEmpty();
         boolean gradCamAvailable = gradCam != null
             && (gradCam.getHeatmapUrl() != null || gradCam.getBaseImageUrl() != null);
 
@@ -82,7 +68,7 @@ public class CaseReviewService {
         GuidelineContext guidelineContext = new GuidelineContext(
             uctTotal,
             aectTotal,
-            prediction.getConfidence(),
+            prediction.getMultimodelConfidence(),
             prediction.getPredictedStep(),
             riskLevel(risks, "sideEffect"),
             riskScore(risks, "sideEffect"),
@@ -111,25 +97,22 @@ public class CaseReviewService {
         review.setVisitDate(patientCase.getCreatedAt() != null ? patientCase.getCreatedAt() : Instant.now());
         review.setSymptoms(buildSymptoms(patientCase.getSymptoms()));
         review.setUrticariaType(prediction.getSubtype());
-        review.setShape(patientCase.getShape());
-        review.setShapeAvailable(patientCase.getShape() != null && !patientCase.getShape().isBlank());
+        review.setShapeAvailable(patientCase.getShape());
         review.setUct(uct);
         review.setAect(aect);
-        review.setShapAvailable(shapAvailable);
         review.setGradCamAvailable(gradCamAvailable);
         review.setGradCamHeatMapImage(gradCam != null ? gradCam.getHeatmapUrl() : null);
         review.setImages(gradCam != null && gradCam.getBaseImageUrl() != null
             ? gradCam.getBaseImageUrl()
             : patientCase.getImagePath());
         review.setShapScores(shapScores);
-        review.setOverallConfidenceScore(prediction.getConfidence());
+        review.setOverallConfidenceScore(prediction.getUrticariaTypeConfidence());
         review.setRisks(riskEntries);
         review.setPredictedDrug(prediction.getPredictedDrug());
         review.setPredictedStep(prediction.getPredictedStep());
-        review.setConfidencePredictedDrugStep(prediction.getConfidence());
+        review.setConfidencePredictedDrugStep(prediction.getMultimodelConfidence());
         review.setRecommendations(recommendationText);
         review.setClinicianFinalStatus(finalStatus);
-        review.setFinalStatus(finalStatus);
         review.setComment(comment);
 
         Instant now = Instant.now();

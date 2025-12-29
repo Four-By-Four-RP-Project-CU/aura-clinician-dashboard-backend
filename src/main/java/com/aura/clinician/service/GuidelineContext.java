@@ -1,5 +1,10 @@
 package com.aura.clinician.service;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Getter
+@RequiredArgsConstructor
 public class GuidelineContext {
     private final int uctTotal;
     private final int aectTotal;
@@ -12,32 +17,6 @@ public class GuidelineContext {
     private final String secondaryDiseaseLevel;
     private final Double secondaryDiseaseScore;
     private final String dailyActivityImpact;
-
-    public GuidelineContext(
-        int uctTotal,
-        int aectTotal,
-        Double confidence,
-        String predictedStep,
-        String sideEffectLevel,
-        Double sideEffectScore,
-        String hypersensitivityLevel,
-        Double hypersensitivityScore,
-        String secondaryDiseaseLevel,
-        Double secondaryDiseaseScore,
-        String dailyActivityImpact
-    ) {
-        this.uctTotal = uctTotal;
-        this.aectTotal = aectTotal;
-        this.confidence = confidence;
-        this.predictedStep = predictedStep;
-        this.sideEffectLevel = sideEffectLevel;
-        this.sideEffectScore = sideEffectScore;
-        this.hypersensitivityLevel = hypersensitivityLevel;
-        this.hypersensitivityScore = hypersensitivityScore;
-        this.secondaryDiseaseLevel = secondaryDiseaseLevel;
-        this.secondaryDiseaseScore = secondaryDiseaseScore;
-        this.dailyActivityImpact = dailyActivityImpact;
-    }
 
     public Object resolve(String key) {
         return switch (key) {

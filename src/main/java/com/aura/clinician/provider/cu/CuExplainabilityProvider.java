@@ -12,13 +12,12 @@ import com.aura.clinician.domain.CaseInputDocument;
 import com.aura.clinician.provider.ExplainabilityProvider;
 import com.aura.clinician.repository.CaseInputRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class CuExplainabilityProvider implements ExplainabilityProvider {
     private final CaseInputRepository caseInputRepository;
-
-    public CuExplainabilityProvider(CaseInputRepository caseInputRepository) {
-        this.caseInputRepository = caseInputRepository;
-    }
 
     @Override
     public ExplanationBlock getExplanation(String caseId) {

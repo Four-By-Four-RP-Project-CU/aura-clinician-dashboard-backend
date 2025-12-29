@@ -32,7 +32,7 @@ public class JustificationService {
                 justifications.add(build("High side-effect risk suggests caution during escalation.", "CAUTION"));
             }
 
-            Double confidence = prediction.getConfidence();
+            Double confidence = prediction.getMultimodelConfidence();
             if (confidence != null && confidence < 0.7) {
                 justifications.add(build("Low prediction confidence. Specialist review recommended.", "REVIEW"));
             }

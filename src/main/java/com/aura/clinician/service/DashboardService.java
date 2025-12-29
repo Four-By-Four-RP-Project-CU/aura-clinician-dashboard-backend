@@ -26,7 +26,10 @@ import com.aura.clinician.repository.PatientCaseRepository;
 import com.aura.clinician.service.explainability.ExplainabilityProvider;
 import org.springframework.http.HttpStatus;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class DashboardService {
     private static final Logger logger = LoggerFactory.getLogger(DashboardService.class);
     private final PatientCaseRepository patientCaseRepository;
@@ -34,20 +37,6 @@ public class DashboardService {
     private final ExplainabilityProvider explainabilityProvider;
     private final GuidelineMapper guidelineMapper;
     private final JustificationService justificationService;
-
-    public DashboardService(
-        PatientCaseRepository patientCaseRepository,
-        AiPredictionRepository aiPredictionRepository,
-        ExplainabilityProvider explainabilityProvider,
-        GuidelineMapper guidelineMapper,
-        JustificationService justificationService
-    ) {
-        this.patientCaseRepository = patientCaseRepository;
-        this.aiPredictionRepository = aiPredictionRepository;
-        this.explainabilityProvider = explainabilityProvider;
-        this.guidelineMapper = guidelineMapper;
-        this.justificationService = justificationService;
-    }
 
     public DashboardResponse getDashboard(String caseId, String diseaseType) {
         logger.info("Building dashboard for caseId={} diseaseType={}", caseId, diseaseType);
@@ -78,10 +67,11 @@ public class DashboardService {
         patientSummary.setGender(patientCase.getSex());
         patientSummary.setHospital(patientCase.getHospital());
         patientSummary.setVisitDate(patientCase.getVisitDate());
+        patientSummary.setShape(patientCase.getShape());
 
         PredictionBlock predictionBlock = new PredictionBlock();
         predictionBlock.setLabel(prediction.getSubtype());
-        Double confidence = requireDouble("confidence", prediction.getConfidence());
+        Double confidence = requireDouble("multimodelConfidence", prediction.getMultimodelConfidence());
         predictionBlock.setConfidence(confidence);
         predictionBlock.setUncertainty(prediction.getUncertainty());
         predictionBlock.setLowConfidence(confidence != null && confidence < 0.7);
