@@ -1,31 +1,37 @@
 package com.aura.clinician.service;
 
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.aura.clinician.api.dto.CaseSummaryResponse;
-import com.aura.clinician.domain.CaseInputDocument;
-import com.aura.clinician.repository.CaseInputRepository;
+import com.aura.clinician.domain.PatientCaseDocument;
+import com.aura.clinician.repository.PatientCaseRepository;
 
 @Service
 public class CaseService {
-    private final CaseInputRepository caseInputRepository;
+    private static final Logger logger = LoggerFactory.getLogger(CaseService.class);
+    private final PatientCaseRepository patientCaseRepository;
 
-    public CaseService(CaseInputRepository caseInputRepository) {
-        this.caseInputRepository = caseInputRepository;
+    public CaseService(PatientCaseRepository patientCaseRepository) {
+        this.patientCaseRepository = patientCaseRepository;
     }
 
     public List<CaseSummaryResponse> getCases() {
-        return caseInputRepository.findAll().stream()
+        List<PatientCaseDocument> cases = patientCaseRepository.findAll();
+        logger.info("Loaded {} patient_cases records", cases.size());
+        return cases.stream()
             .map(this::toResponse)
             .toList();
     }
 
-    private CaseSummaryResponse toResponse(CaseInputDocument summary) {
+    private CaseSummaryResponse toResponse(PatientCaseDocument summary) {
         CaseSummaryResponse response = new CaseSummaryResponse();
         response.setCaseId(summary.getCaseId());
-        response.setAge(summary.getPatientAge());
-        response.setGender(summary.getPatientGender());
+        response.setAge(summary.getAgeYears());
+        response.setGender(summary.getSex());
         return response;
     }
 }

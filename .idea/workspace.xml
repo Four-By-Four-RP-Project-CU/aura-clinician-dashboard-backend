@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="e75f38fd-ef06-47d9-b62d-83d65fa4b062" name="Changes" comment="DB connection added">
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/controller/AuditController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/controller/CaseController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/controller/CaseController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/controller/DashboardController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/controller/DashboardController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/AuditMetadata.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/DashboardResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/DashboardResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/PredictionBlock.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/PredictionBlock.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/RecommendationItem.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/RecommendationItem.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/domain/AuditEntry.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/exception/GlobalExceptionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/exception/GlobalExceptionHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/plugin/CuPlugin.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/plugin/CuPlugin.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/repository/AuditRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/repository/InMemoryAuditRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/service/AuditService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/service/CaseService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/service/CaseService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/service/DashboardService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/service/DashboardService.java" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="clinician-dashboard" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Pradi-Hub&quot;
+  }
+}</component>
+  <component name="GitToolBoxStore">
+    <option name="recentBranches">
+      <RecentBranches>
+        <option name="branchesForRepo">
+          <list>
+            <RecentBranchesForRepo>
+              <option name="branches">
+                <list>
+                  <RecentBranch>
+                    <option name="branchName" value="clinician-dashboard-explainability" />
+                    <option name="lastUsedInstant" value="1766775187" />
+                  </RecentBranch>
+                  <RecentBranch>
+                    <option name="branchName" value="clinician-dashboard" />
+                    <option name="lastUsedInstant" value="1766767729" />
+                  </RecentBranch>
+                  <RecentBranch>
+                    <option name="branchName" value="main" />
+                    <option name="lastUsedInstant" value="1766757853" />
+                  </RecentBranch>
+                </list>
+              </option>
+              <option name="repositoryRootUrl" value="file://$PROJECT_DIR$" />
+            </RecentBranchesForRepo>
+          </list>
+        </option>
+      </RecentBranches>
+    </option>
+  </component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Four-By-Four-RP-Project-CU/aura-clinician-dashboard-backend.git&quot;,
+    &quot;accountId&quot;: &quot;6194ae0d-7aa0-47fe-b8f1-e0dca8bd95de&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6
+}</component>
+  <component name="ProjectId" id="37Njx4Jmx8KOCU7vLzFhZ8f4ZQT" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Maven.aura-clinician-backend [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.aura-clinician-backend [install].executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;Spring Boot.ClinicianBackendApplication.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;clinician-dashboard-explainability&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/pradicksha/Documents/SLIIT/Y4S1/RP/AURA/aura-clinician-dashboard-backend&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;org.jetbrains.plugins.github.ui.GithubSettingsConfigurable&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  },
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;mongo&quot;
+    ]
+  }
+}</component>
+  <component name="RunManager">
+    <configuration name="ClinicianBackendApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <envs>
+        <env name="MONGODB_URI" value="mongodb+srv://userAura:ProjectAURA@cluster0.luev8nk.mongodb.net/?appName=Cluster0" />
+        <env name="MONGODB_DB" value="aura" />
+      </envs>
+      <module name="aura-clinician-backend" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.aura.clinician.ClinicianBackendApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-bf35d07a577b-intellij.indexing.shared.core-IU-252.23892.409" />
+        <option value="bundled-js-predefined-d6986cc7102b-e03c56caf84a-JavaScript-IU-252.23892.409" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="e75f38fd-ef06-47d9-b62d-83d65fa4b062" name="Changes" comment="" />
+      <created>1766750665907</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1766750665907</updated>
+      <workItem from="1766750667256" duration="7362000" />
+      <workItem from="1766759724994" duration="1340000" />
+      <workItem from="1766761444918" duration="12760000" />
+      <workItem from="1766900193699" duration="27865000" />
+    </task>
+    <task id="LOCAL-00001" summary="changes made">
+      <option name="closed" value="true" />
+      <created>1766757357398</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1766757357398</updated>
+    </task>
+    <task id="LOCAL-00002" summary="DB connection added">
+      <option name="closed" value="true" />
+      <created>1766774595486</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1766774595486</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="changes made" />
+    <MESSAGE value="DB connection added" />
+    <option name="LAST_COMMIT_MESSAGE" value="DB connection added" />
+  </component>
+</project>
