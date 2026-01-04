@@ -25,9 +25,15 @@ public class DashboardController {
     @GetMapping("/{caseId}")
     public DashboardResponse getDashboard(
         @PathVariable String caseId,
-        @RequestParam String diseaseType
+        @RequestParam String diseaseType,
+        @RequestParam(defaultValue = "false") boolean includeExplainability
     ) {
-        logger.info("HIT - /api/v1/dashboard/{} | req diseaseType={}", caseId, diseaseType);
-        return dashboardService.getDashboard(caseId, diseaseType);
+        logger.info(
+            "HIT - /api/v1/dashboard/{} | req diseaseType={} includeExplainability={}",
+            caseId,
+            diseaseType,
+            includeExplainability
+        );
+        return dashboardService.getDashboard(caseId, diseaseType, includeExplainability);
     }
 }

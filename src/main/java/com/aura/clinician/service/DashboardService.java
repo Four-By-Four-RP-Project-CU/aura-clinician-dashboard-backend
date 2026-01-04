@@ -38,7 +38,7 @@ public class DashboardService {
     private final GuidelineMapper guidelineMapper;
     private final JustificationService justificationService;
 
-    public DashboardResponse getDashboard(String caseId, String diseaseType) {
+    public DashboardResponse getDashboard(String caseId, String diseaseType, boolean includeExplainability) {
         logger.info("Building dashboard for caseId={} diseaseType={}", caseId, diseaseType);
         PatientCaseDocument patientCase = patientCaseRepository.findByCaseId(caseId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient case not found"));
@@ -95,13 +95,20 @@ public class DashboardService {
         String resolvedDiseaseType = diseaseType != null ? diseaseType : patientCase.getDiseaseType();
 
         ExplanationBlock explanation = new ExplanationBlock();
-        List<ShapContribution> shapContributions = explainabilityProvider.getShap(caseId, patientCase);
-        explanation.setShapContributions(shapContributions);
-        explanation.setShapAvailable(shapContributions != null && !shapContributions.isEmpty());
-        GradCamArtifact gradCam = explainabilityProvider.getGradcam(caseId, patientCase);
-        explanation.setGradCam(gradCam);
-        explanation.setGradCamAvailable(gradCam != null
-            && (gradCam.getHeatmapUrl() != null || gradCam.getBaseImageUrl() != null));
+        if (includeExplainability) {
+            List<ShapContribution> shapContributions = explainabilityProvider.getShap(caseId, patientCase);
+            explanation.setShapContributions(shapContributions);
+            explanation.setShapAvailable(shapContributions != null && !shapContributions.isEmpty());
+            GradCamArtifact gradCam = explainabilityProvider.getGradcam(caseId, patientCase);
+            explanation.setGradCam(gradCam);
+            explanation.setGradCamAvailable(gradCam != null
+                && (gradCam.getHeatmapUrl() != null || gradCam.getBaseImageUrl() != null));
+        } else {
+            explanation.setShapContributions(new ArrayList<>());
+            explanation.setShapAvailable(false);
+            explanation.setGradCam(null);
+            explanation.setGradCamAvailable(false);
+        }
 
         List<JustificationItem> justifications = justificationService.buildJustifications(uctTotal, aectTotal, prediction);
 

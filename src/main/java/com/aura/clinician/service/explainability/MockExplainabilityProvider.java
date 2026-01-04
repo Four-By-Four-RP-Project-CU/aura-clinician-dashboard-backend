@@ -16,6 +16,14 @@ public class MockExplainabilityProvider implements ExplainabilityProvider {
     private static final String MOCK_BASE_IMAGE = "/images/clinician-base.png";
     private static final String MOCK_HEATMAP_IMAGE = "/images/clinician-hm.png";
 
+    private static final org.slf4j.Logger logger =
+        org.slf4j.LoggerFactory.getLogger(MockExplainabilityProvider.class);
+
+    @jakarta.annotation.PostConstruct
+    void logActive() {
+        logger.info("Explainability provider: MockExplainabilityProvider (profile != python)");
+    }
+
     @Override
     public List<ShapContribution> getShap(String caseId, PatientCaseDocument patientCase) {
         List<ShapContribution> contributions = new ArrayList<>();
