@@ -11,3 +11,7 @@ management:
     web:
       exposure:
         include: health,info
+
+python:
+  service:
+    base-url : http://localhost:8000
