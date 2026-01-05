@@ -4,6 +4,7 @@ public class RecommendationItem {
     private String type;
     private String text;
     private String guidelineTag;
+    private String severity;
 
     public String getType() {
         return type;
@@ -27,5 +28,13 @@ public class RecommendationItem {
 
     public void setGuidelineTag(String guidelineTag) {
         this.guidelineTag = guidelineTag;
+    }
+
+    public String getSeverity() {
+        return severity;
+    }
+
+    public void setSeverity(String severity) {
+        this.severity = severity;
     }
 }

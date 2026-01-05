@@ -8,12 +8,15 @@ public class DashboardResponse {
     private String diseaseType;
     private String interpretationSummary;
     private List<String> warningFlags = new ArrayList<>();
+    private PatientSummary patientSummary;
+    private DiseaseControlInfo diseaseControlInfo;
     private PredictionBlock prediction;
     private List<ScoreItem> scores = new ArrayList<>();
+    private List<RiskItem> risks = new ArrayList<>();
+    private TreatmentPlan treatmentPlan;
     private ExplanationBlock explanation;
+    private List<JustificationItem> justifications = new ArrayList<>();
     private List<RecommendationItem> recommendations = new ArrayList<>();
-    private AuditMetadata audit;
-    private String feedbackStatus;
 
     public String getCaseId() {
         return caseId;
@@ -47,6 +50,22 @@ public class DashboardResponse {
         this.warningFlags = warningFlags;
     }
 
+    public PatientSummary getPatientSummary() {
+        return patientSummary;
+    }
+
+    public void setPatientSummary(PatientSummary patientSummary) {
+        this.patientSummary = patientSummary;
+    }
+
+    public DiseaseControlInfo getDiseaseControlInfo() {
+        return diseaseControlInfo;
+    }
+
+    public void setDiseaseControlInfo(DiseaseControlInfo diseaseControlInfo) {
+        this.diseaseControlInfo = diseaseControlInfo;
+    }
+
     public PredictionBlock getPrediction() {
         return prediction;
     }
@@ -63,12 +82,36 @@ public class DashboardResponse {
         this.scores = scores;
     }
 
+    public List<RiskItem> getRisks() {
+        return risks;
+    }
+
+    public void setRisks(List<RiskItem> risks) {
+        this.risks = risks;
+    }
+
+    public TreatmentPlan getTreatmentPlan() {
+        return treatmentPlan;
+    }
+
+    public void setTreatmentPlan(TreatmentPlan treatmentPlan) {
+        this.treatmentPlan = treatmentPlan;
+    }
+
     public ExplanationBlock getExplanation() {
         return explanation;
     }
 
     public void setExplanation(ExplanationBlock explanation) {
         this.explanation = explanation;
+    }
+
+    public List<JustificationItem> getJustifications() {
+        return justifications;
+    }
+
+    public void setJustifications(List<JustificationItem> justifications) {
+        this.justifications = justifications;
     }
 
     public List<RecommendationItem> getRecommendations() {
@@ -79,19 +122,4 @@ public class DashboardResponse {
         this.recommendations = recommendations;
     }
 
-    public AuditMetadata getAudit() {
-        return audit;
-    }
-
-    public void setAudit(AuditMetadata audit) {
-        this.audit = audit;
-    }
-
-    public String getFeedbackStatus() {
-        return feedbackStatus;
-    }
-
-    public void setFeedbackStatus(String feedbackStatus) {
-        this.feedbackStatus = feedbackStatus;
-    }
 }

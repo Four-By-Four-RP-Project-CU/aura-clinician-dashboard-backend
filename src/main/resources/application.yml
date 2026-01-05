@@ -1,8 +1,17 @@
 server:
   port: 8081
 
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb+srv://userAura:ProjectAURA@cluster0.luev8nk.mongodb.net/?appName\=Cluster0}
+      database: ${MONGODB_DB:aura}
 management:
   endpoints:
     web:
       exposure:
         include: health,info
+
+python:
+  service:
+    base-url : http://localhost:8000

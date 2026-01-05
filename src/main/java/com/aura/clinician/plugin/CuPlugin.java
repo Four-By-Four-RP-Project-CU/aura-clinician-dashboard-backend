@@ -1,12 +1,10 @@
 package com.aura.clinician.plugin;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.aura.clinician.api.dto.AuditMetadata;
 import com.aura.clinician.api.dto.DashboardResponse;
 import com.aura.clinician.api.dto.ExplanationBlock;
 import com.aura.clinician.api.dto.PredictionBlock;
@@ -74,13 +72,6 @@ public class CuPlugin implements DiseaseModule {
         response.setRecommendations(recommendations);
         response.setWarningFlags(warningFlags);
         response.setInterpretationSummary("Moderate disease activity with partial control indicators");
-
-        AuditMetadata audit = new AuditMetadata();
-        audit.setModelVersion("CU-MOCK-1.0");
-        audit.setTimestamp(Instant.now());
-        audit.setExplainabilityEnabled(true);
-        audit.setDataSource("de-identified-case-store");
-        response.setAudit(audit);
 
         return response;
     }

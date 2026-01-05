@@ -6,8 +6,8 @@ import java.util.Map;
 public class PredictionBlock {
     private String label;
     private Map<String, Double> probabilities = new LinkedHashMap<>();
-    private double confidence;
-    private double uncertainty;
+    private Double confidence;
+    private Double uncertainty;
     private boolean lowConfidence;
     private String interpretation;
 
@@ -27,19 +27,19 @@ public class PredictionBlock {
         this.probabilities = probabilities;
     }
 
-    public double getConfidence() {
+    public Double getConfidence() {
         return confidence;
     }
 
-    public void setConfidence(double confidence) {
+    public void setConfidence(Double confidence) {
         this.confidence = confidence;
     }
 
-    public double getUncertainty() {
+    public Double getUncertainty() {
         return uncertainty;
     }
 
-    public void setUncertainty(double uncertainty) {
+    public void setUncertainty(Double uncertainty) {
         this.uncertainty = uncertainty;
     }
 
