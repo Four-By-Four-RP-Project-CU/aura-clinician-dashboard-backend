@@ -13,8 +13,11 @@ import com.aura.clinician.api.dto.DiseaseControlInfo;
 import com.aura.clinician.api.dto.ExplanationBlock;
 import com.aura.clinician.api.dto.GradCamArtifact;
 import com.aura.clinician.api.dto.JustificationItem;
+import com.aura.clinician.api.dto.LlmEvidencePayload;
+import com.aura.clinician.api.dto.LlmExplainabilityNarrative;
 import com.aura.clinician.api.dto.PatientSummary;
 import com.aura.clinician.api.dto.PredictionBlock;
+import com.aura.clinician.api.dto.RecommendationItem;
 import com.aura.clinician.api.dto.RiskItem;
 import com.aura.clinician.api.dto.ScoreItem;
 import com.aura.clinician.api.dto.TreatmentPlan;
@@ -24,6 +27,7 @@ import com.aura.clinician.domain.PatientCaseDocument;
 import com.aura.clinician.repository.AiPredictionRepository;
 import com.aura.clinician.repository.PatientCaseRepository;
 import com.aura.clinician.service.explainability.ExplainabilityProvider;
+import com.aura.clinician.service.llm.LlmExplainabilityService;
 import org.springframework.http.HttpStatus;
 
 import lombok.RequiredArgsConstructor;
@@ -37,6 +41,7 @@ public class DashboardService {
     private final ExplainabilityProvider explainabilityProvider;
     private final GuidelineMapper guidelineMapper;
     private final JustificationService justificationService;
+    private final LlmExplainabilityService llmExplainabilityService;
 
     public DashboardResponse getDashboard(String caseId, String diseaseType, boolean includeExplainability) {
         logger.info("Building dashboard for caseId={} diseaseType={}", caseId, diseaseType);
@@ -137,7 +142,22 @@ public class DashboardService {
         response.setTreatmentPlan(treatmentPlan);
         response.setExplanation(explanation);
         response.setJustifications(justifications);
-        response.setRecommendations(guidelineMapper.map(resolvedDiseaseType, guidelineContext, justifications));
+        List<RecommendationItem> mappedRecommendations =
+            guidelineMapper.map(resolvedDiseaseType, guidelineContext, justifications);
+        response.setRecommendations(mappedRecommendations);
+
+        if (includeExplainability) {
+            LlmEvidencePayload evidencePayload = buildLlmEvidencePayload(
+                predictionBlock,
+                scores,
+                explanation,
+                mappedRecommendations,
+                treatmentPlan,
+                collectMissingData(patientCase, prediction, explanation)
+            );
+            LlmExplainabilityNarrative narrative = llmExplainabilityService.generateNarrative(evidencePayload);
+            response.setLlmExplainability(narrative);
+        }
 
         List<String> warnings = new ArrayList<>();
         if (predictionBlock.isLowConfidence()) {
@@ -225,5 +245,91 @@ public class DashboardService {
             case "secondaryDisease" -> risks.getSecondaryDisease();
             default -> null;
         };
+    }
+
+    private LlmEvidencePayload buildLlmEvidencePayload(
+        PredictionBlock prediction,
+        List<ScoreItem> scores,
+        ExplanationBlock explanation,
+        List<RecommendationItem> recommendations,
+        TreatmentPlan treatmentPlan,
+        List<String> missingData
+    ) {
+        LlmEvidencePayload payload = new LlmEvidencePayload();
+        payload.setSubtypePredictionLabel(prediction != null ? prediction.getLabel() : null);
+        payload.setConfidence(prediction != null ? prediction.getConfidence() : null);
+
+        ScoreItem uct = scoreByCode(scores, "UCT");
+        ScoreItem aect = scoreByCode(scores, "AECT");
+        payload.setUctScore(uct != null ? uct.getValue() : null);
+        payload.setUctStatus(uct != null ? uct.getInterpretation() : null);
+        payload.setAectScore(aect != null ? aect.getValue() : null);
+        payload.setAectStatus(aect != null ? aect.getInterpretation() : null);
+
+        if (explanation != null && explanation.getShapContributions() != null) {
+            payload.setTopShapFeatures(
+                explanation.getShapContributions().stream().limit(5).toList()
+            );
+        }
+        if (explanation != null && explanation.getGradCam() != null) {
+            payload.setGradCamHeatmapUrl(explanation.getGradCam().getHeatmapUrl());
+            payload.setGradCamBaseImageUrl(explanation.getGradCam().getBaseImageUrl());
+        }
+        payload.setGradCamSummary(
+            (payload.getGradCamHeatmapUrl() != null || payload.getGradCamBaseImageUrl() != null)
+                ? "Grad-CAM artifacts available."
+                : "Grad-CAM artifacts unavailable."
+        );
+
+        if (recommendations != null) {
+            payload.setRecommendations(
+                recommendations.stream()
+                    .map(RecommendationItem::getText)
+                    .filter(text -> text != null && !text.isBlank())
+                    .toList()
+            );
+        }
+
+        List<String> treatmentPath = new ArrayList<>();
+        if (treatmentPlan != null && treatmentPlan.getPredictedStep() != null) {
+            treatmentPath.add("Predicted step: " + treatmentPlan.getPredictedStep());
+        }
+        if (treatmentPlan != null && treatmentPlan.getPredictedDrug() != null) {
+            treatmentPath.add("Predicted drug: " + treatmentPlan.getPredictedDrug());
+        }
+        payload.setTreatmentPathwayList(treatmentPath);
+        payload.setMissingData(missingData);
+        return payload;
+    }
+
+    private ScoreItem scoreByCode(List<ScoreItem> scores, String code) {
+        if (scores == null) {
+            return null;
+        }
+        return scores.stream()
+            .filter(item -> code.equalsIgnoreCase(item.getCode()))
+            .findFirst()
+            .orElse(null);
+    }
+
+    private List<String> collectMissingData(
+        PatientCaseDocument patientCase,
+        AiPredictionDocument prediction,
+        ExplanationBlock explanation
+    ) {
+        List<String> missing = new ArrayList<>();
+        if (patientCase == null || patientCase.getLabs() == null) {
+            missing.add("labs");
+        }
+        if (prediction == null || prediction.getMultimodelConfidence() == null) {
+            missing.add("multimodelConfidence");
+        }
+        if (explanation == null || explanation.getShapContributions() == null || explanation.getShapContributions().isEmpty()) {
+            missing.add("shapContributions");
+        }
+        if (explanation == null || explanation.getGradCam() == null || explanation.getGradCam().getHeatmapUrl() == null) {
+            missing.add("gradCamHeatmap");
+        }
+        return missing;
     }
 }

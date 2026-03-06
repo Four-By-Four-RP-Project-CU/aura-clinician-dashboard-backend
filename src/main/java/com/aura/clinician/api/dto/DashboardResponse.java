@@ -20,6 +20,7 @@ public class DashboardResponse {
     private List<RiskItem> risks = new ArrayList<>();
     private TreatmentPlan treatmentPlan;
     private ExplanationBlock explanation;
+    private LlmExplainabilityNarrative llmExplainability;
     private List<JustificationItem> justifications = new ArrayList<>();
     private List<RecommendationItem> recommendations = new ArrayList<>();
 }
