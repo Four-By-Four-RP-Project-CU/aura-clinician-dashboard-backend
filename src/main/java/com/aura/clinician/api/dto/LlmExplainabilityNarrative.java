@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class LlmExplainabilityNarrative {
     private String summary;
+    private String decisionRationale;
     private String tabularEvidence;
     private String imageEvidence;
     private String controlStatus;

@@ -32,17 +32,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class OpenRouterLlmExplainabilityService implements LlmExplainabilityService {
     private static final Logger logger = LoggerFactory.getLogger(OpenRouterLlmExplainabilityService.class);
     private static final String SYSTEM_PROMPT =
-        "You are an explainability summarizer for a clinician dashboard. " +
-        "Use only provided evidence. Do not invent diagnosis, medication changes, dosages, tests, thresholds or advice. " +
-        "If evidence is missing, output 'Insufficient data'. " +
-        "Use cautious language: suggests, may indicate, consider. " +
-        "Return ONLY valid JSON with exactly these keys: summary, tabularEvidence, imageEvidence, controlStatus, recommendations, safetyNote. " +
-        "Do not use markdown, code fences, or backticks. " +
-        "Do not repeat the full evidence JSON. " +
-        "Do not return nested JSON objects inside any field. " +
-        "summary must be 2 to 4 sentences. " +
+        "You are a clinical explainability narrator for a clinician dashboard. " +
+        "Your task is to interpret model evidence in clinician-facing language, not to produce a raw data summary. " +
+        "Use only the provided evidence. Do not invent diagnoses, medications, tests, thresholds, dosage instructions, or new medical advice. " +
+        "If any required evidence is missing, write exactly 'Insufficient data' for that field. " +
+        "The explanation must clearly cover: what the model concluded, why it concluded that, which tabular features contributed most, whether image evidence supports the conclusion, and how UCT/AECT influence interpretation. " +
+        "Use cautious wording such as: suggests, appears consistent with, was influenced by, supports, may indicate, closer review may be warranted. " +
+        "Return ONLY valid JSON with exactly these keys: summary, decisionRationale, tabularEvidence, imageEvidence, controlStatus, recommendations, safetyNote. " +
+        "Do not use markdown, code fences, bullet markdown, or backticks. " +
+        "Do not repeat the full evidence JSON or internal field names. " +
+        "Do not place nested JSON objects in any text field. " +
+        "summary must be 2-4 sentences. " +
+        "decisionRationale must explicitly explain decision, reason, major contributors, image support, and UCT/AECT impact. " +
         "tabularEvidence, imageEvidence, and controlStatus must be plain text strings. " +
-        "recommendations must be a short array of strings.";
+        "recommendations must be a short array of concise clinician-friendly considerations. " +
+        "safetyNote must be one short sentence.";
     private static final Pattern DOSAGE_PATTERN = Pattern.compile(
         "(?i)\\b\\d+(?:\\.\\d+)?\\s*(mg|mcg|g|ml|iu|units?)\\b|\\b(bid|tid|qd|daily|twice\\s+daily|once\\s+daily)\\b"
     );
@@ -199,6 +203,7 @@ public class OpenRouterLlmExplainabilityService implements LlmExplainabilityServ
     private LlmExplainabilityNarrative fallback(LlmEvidencePayload payload, String summary) {
         LlmExplainabilityNarrative narrative = new LlmExplainabilityNarrative();
         narrative.setSummary(summary);
+        narrative.setDecisionRationale("Insufficient data");
         narrative.setTabularEvidence(
             "Subtype=" + safe(payload.getSubtypePredictionLabel()) +
             ", confidence=" + safe(payload.getConfidence()) +
@@ -248,7 +253,13 @@ public class OpenRouterLlmExplainabilityService implements LlmExplainabilityServ
         if (safeRecommendations.isEmpty() && !allowedRecommendations.isEmpty()) {
             safeRecommendations = new ArrayList<>(allowedRecommendations);
         }
-        narrative.setRecommendations(safeRecommendations);
+        narrative.setRecommendations(
+            safeRecommendations.stream()
+                .map(this::cleanPlainTextField)
+                .filter(text -> text != null && !text.isBlank())
+                .limit(4)
+                .toList()
+        );
 
         if (containsDosageInstruction(narrative) || containsDisallowedMedication(narrative, payload)) {
             logger.warn("LLM output rejected due to medication/dosage policy violation; using fallback narrative");
@@ -267,6 +278,9 @@ public class OpenRouterLlmExplainabilityService implements LlmExplainabilityServ
 
         if (narrative.getSummary() == null || narrative.getSummary().isBlank()) {
             narrative.setSummary("LLM summary unavailable.");
+        }
+        if (narrative.getDecisionRationale() == null || narrative.getDecisionRationale().isBlank()) {
+            narrative.setDecisionRationale("Insufficient data");
         }
         if (narrative.getControlStatus() == null || narrative.getControlStatus().isBlank()) {
             narrative.setControlStatus("Insufficient data");
@@ -325,6 +339,7 @@ public class OpenRouterLlmExplainabilityService implements LlmExplainabilityServ
         return String.join(
             " ",
             safe(narrative.getSummary()),
+            safe(narrative.getDecisionRationale()),
             safe(narrative.getTabularEvidence()),
             safe(narrative.getImageEvidence()),
             safe(narrative.getControlStatus()),
@@ -427,6 +442,7 @@ public class OpenRouterLlmExplainabilityService implements LlmExplainabilityServ
 
     private void normalizeNarrativeFields(LlmExplainabilityNarrative narrative) {
         narrative.setSummary(cleanPlainTextField(narrative.getSummary()));
+        narrative.setDecisionRationale(cleanPlainTextField(narrative.getDecisionRationale()));
         narrative.setTabularEvidence(cleanPlainTextField(narrative.getTabularEvidence()));
         narrative.setImageEvidence(cleanPlainTextField(narrative.getImageEvidence()));
         narrative.setControlStatus(cleanPlainTextField(narrative.getControlStatus()));
@@ -444,7 +460,60 @@ public class OpenRouterLlmExplainabilityService implements LlmExplainabilityServ
             .replaceAll("(?i)^\\s*json\\s*[:\\-]?\\s*", "")
             .replaceAll("\\s+", " ")
             .trim();
+        if (cleaned.startsWith("{") || cleaned.startsWith("[")) {
+            try {
+                JsonNode node = objectMapper.readTree(cleaned);
+                String extracted = extractPlainTextFromNode(node);
+                if (extracted != null && !extracted.isBlank()) {
+                    return extracted.replaceAll("\\s+", " ").trim();
+                }
+                return "Insufficient data";
+            } catch (Exception ignored) {
+                return "Insufficient data";
+            }
+        }
         return cleaned;
+    }
+
+    private String extractPlainTextFromNode(JsonNode node) {
+        if (node == null || node.isNull()) {
+            return null;
+        }
+        if (node.isTextual() || node.isNumber() || node.isBoolean()) {
+            return node.asText();
+        }
+        if (node.isObject()) {
+            String[] preferredKeys = {"summary", "decisionRationale", "tabularEvidence", "imageEvidence", "controlStatus", "safetyNote", "text", "message", "content"};
+            for (String key : preferredKeys) {
+                JsonNode child = node.get(key);
+                String text = extractPlainTextFromNode(child);
+                if (text != null && !text.isBlank()) {
+                    return text;
+                }
+            }
+            var fields = node.fields();
+            while (fields.hasNext()) {
+                String text = extractPlainTextFromNode(fields.next().getValue());
+                if (text != null && !text.isBlank()) {
+                    return text;
+                }
+            }
+            return null;
+        }
+        if (node.isArray()) {
+            List<String> items = new ArrayList<>();
+            for (JsonNode child : node) {
+                String text = extractPlainTextFromNode(child);
+                if (text != null && !text.isBlank()) {
+                    items.add(text);
+                }
+            }
+            if (items.isEmpty()) {
+                return null;
+            }
+            return String.join("; ", items);
+        }
+        return node.asText(null);
     }
 
     private String safe(Object value) {
