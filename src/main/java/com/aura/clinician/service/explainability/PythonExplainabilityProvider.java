@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,12 +32,17 @@ import lombok.RequiredArgsConstructor;
 public class PythonExplainabilityProvider implements ExplainabilityProvider {
     private static final Logger logger = LoggerFactory.getLogger(PythonExplainabilityProvider.class);
     private final RestTemplate restTemplate;
+    private final Map<String, CacheEntry<List<ShapContribution>>> shapCache = new ConcurrentHashMap<>();
+    private final Map<String, CacheEntry<GradCamArtifact>> gradcamCache = new ConcurrentHashMap<>();
 
     @Value("${explainability.service.url:http://localhost:8001}")
     private String baseUrl;
 
     @Value("${explainability.service.api-key:}")
     private String apiKey;
+
+    @Value("${explainability.cache.ttl-seconds:900}")
+    private long cacheTtlSeconds;
 
     @jakarta.annotation.PostConstruct
     void logActive() {
@@ -47,6 +53,11 @@ public class PythonExplainabilityProvider implements ExplainabilityProvider {
     public List<ShapContribution> getShap(String caseId, PatientCaseDocument patientCase) {
         if (patientCase == null) {
             return List.of();
+        }
+        CacheEntry<List<ShapContribution>> cachedShap = shapCache.get(caseId);
+        if (cachedShap != null && !cachedShap.isExpired()) {
+            logger.info("SHAP cache hit for caseId={}", caseId);
+            return cachedShap.getValue();
         }
         try {
             logger.info("Calling SHAP service for caseId={}", caseId);
@@ -73,6 +84,7 @@ public class PythonExplainabilityProvider implements ExplainabilityProvider {
                 item.setDirection(score.getContribution() >= 0 ? "POSITIVE" : "NEGATIVE");
                 contributions.add(item);
             }
+            shapCache.put(caseId, new CacheEntry<>(contributions, expiresAtMillis()));
             return contributions;
         } catch (Exception ex) {
             logger.warn("SHAP service unavailable for caseId={}", caseId);
@@ -85,6 +97,13 @@ public class PythonExplainabilityProvider implements ExplainabilityProvider {
         GradCamArtifact artifact = new GradCamArtifact();
         if (patientCase != null) {
             artifact.setBaseImageUrl(patientCase.getImagePath());
+        }
+        String imagePathForKey = patientCase != null ? patientCase.getImagePath() : "";
+        String gradcamCacheKey = caseId + "::" + (imagePathForKey != null ? imagePathForKey : "");
+        CacheEntry<GradCamArtifact> cachedGradcam = gradcamCache.get(gradcamCacheKey);
+        if (cachedGradcam != null && !cachedGradcam.isExpired()) {
+            logger.info("Grad-CAM cache hit for caseId={}", caseId);
+            return cachedGradcam.getValue();
         }
         try {
             logger.info("Calling Grad-CAM service for caseId={} imagePath={}", caseId,
@@ -114,10 +133,16 @@ public class PythonExplainabilityProvider implements ExplainabilityProvider {
                 }
                 logger.info("Grad-CAM heatmap ready for caseId={} heatmapUrl={}", caseId, body.getHeatmapUrl());
             }
+            gradcamCache.put(gradcamCacheKey, new CacheEntry<>(artifact, expiresAtMillis()));
         } catch (Exception ex) {
             logger.warn("Grad-CAM service unavailable for caseId={}", caseId);
         }
         return artifact;
+    }
+
+    private long expiresAtMillis() {
+        long ttl = Math.max(30L, cacheTtlSeconds);
+        return System.currentTimeMillis() + (ttl * 1000L);
     }
 
     private Map<String, Object> buildFeatureMap(PatientCaseDocument patientCase) {
@@ -192,5 +217,15 @@ public class PythonExplainabilityProvider implements ExplainabilityProvider {
         private String baseImagePath;
         private String baseImageUrl;
         private String error;
+    }
+
+    @Data
+    private static class CacheEntry<T> {
+        private final T value;
+        private final long expiresAtMillis;
+
+        boolean isExpired() {
+            return System.currentTimeMillis() > expiresAtMillis;
+        }
     }
 }
