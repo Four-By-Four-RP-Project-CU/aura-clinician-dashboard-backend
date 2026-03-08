@@ -26,14 +26,16 @@ public class DashboardController {
     public DashboardResponse getDashboard(
         @PathVariable String caseId,
         @RequestParam String diseaseType,
-        @RequestParam(defaultValue = "false") boolean includeExplainability
+        @RequestParam(defaultValue = "false") boolean includeExplainability,
+        @RequestParam(defaultValue = "true") boolean includeLlm
     ) {
         logger.info(
-            "HIT - /api/v1/dashboard/{} | req diseaseType={} includeExplainability={}",
+            "HIT - /api/v1/dashboard/{} | req diseaseType={} includeExplainability={} includeLlm={}",
             caseId,
             diseaseType,
-            includeExplainability
+            includeExplainability,
+            includeLlm
         );
-        return dashboardService.getDashboard(caseId, diseaseType, includeExplainability);
+        return dashboardService.getDashboard(caseId, diseaseType, includeExplainability, includeLlm);
     }
 }

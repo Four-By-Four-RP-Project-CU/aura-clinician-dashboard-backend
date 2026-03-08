@@ -2,6 +2,8 @@ package com.aura.clinician.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
@@ -43,7 +45,12 @@ public class DashboardService {
     private final JustificationService justificationService;
     private final LlmExplainabilityService llmExplainabilityService;
 
-    public DashboardResponse getDashboard(String caseId, String diseaseType, boolean includeExplainability) {
+    public DashboardResponse getDashboard(
+        String caseId,
+        String diseaseType,
+        boolean includeExplainability,
+        boolean includeLlm
+    ) {
         logger.info("Building dashboard for caseId={} diseaseType={}", caseId, diseaseType);
         PatientCaseDocument patientCase = patientCaseRepository.findByCaseId(caseId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient case not found"));
@@ -101,10 +108,30 @@ public class DashboardService {
 
         ExplanationBlock explanation = new ExplanationBlock();
         if (includeExplainability) {
-            List<ShapContribution> shapContributions = explainabilityProvider.getShap(caseId, patientCase);
+            CompletableFuture<List<ShapContribution>> shapFuture = CompletableFuture.supplyAsync(() ->
+                explainabilityProvider.getShap(caseId, patientCase)
+            );
+            CompletableFuture<GradCamArtifact> gradCamFuture = CompletableFuture.supplyAsync(() ->
+                explainabilityProvider.getGradcam(caseId, patientCase)
+            );
+
+            List<ShapContribution> shapContributions;
+            GradCamArtifact gradCam;
+            try {
+                shapContributions = shapFuture.join();
+            } catch (CompletionException ex) {
+                logger.warn("SHAP fetch failed for caseId={}: {}", caseId, ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage());
+                shapContributions = new ArrayList<>();
+            }
+            try {
+                gradCam = gradCamFuture.join();
+            } catch (CompletionException ex) {
+                logger.warn("Grad-CAM fetch failed for caseId={}: {}", caseId, ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage());
+                gradCam = null;
+            }
+
             explanation.setShapContributions(shapContributions);
             explanation.setShapAvailable(shapContributions != null && !shapContributions.isEmpty());
-            GradCamArtifact gradCam = explainabilityProvider.getGradcam(caseId, patientCase);
             explanation.setGradCam(gradCam);
             explanation.setGradCamAvailable(gradCam != null
                 && (gradCam.getHeatmapUrl() != null || gradCam.getBaseImageUrl() != null));
@@ -146,7 +173,7 @@ public class DashboardService {
             guidelineMapper.map(resolvedDiseaseType, guidelineContext, justifications);
         response.setRecommendations(mappedRecommendations);
 
-        if (includeExplainability) {
+        if (includeExplainability && includeLlm) {
             LlmEvidencePayload evidencePayload = buildLlmEvidencePayload(
                 predictionBlock,
                 scores,
