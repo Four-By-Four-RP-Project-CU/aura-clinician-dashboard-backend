@@ -10,7 +10,7 @@ llm:
   openrouter:
     base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai}
     chat-path: ${OPENROUTER_CHAT_PATH:/api/v1/chat/completions}
-    model: ${OPENROUTER_MODEL:google/gemma-3-12b-it:free}
+    model: ${OPENROUTER_MODEL:google/gemini-3.1-flash-lite-preview}
     api-key: ${OPENROUTER_API_KEY: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}
     timeout-seconds: ${OPENROUTER_TIMEOUT_SECONDS:20}
     temperature: ${OPENROUTER_TEMPERATURE:0.1}
