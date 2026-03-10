@@ -34,6 +34,9 @@ public class ReviewQueueRepositoryImpl implements ReviewQueueRepository {
         // Always only NEED_REVIEW
         criteria.add(Criteria.where("clinicianFinalStatus").is(FinalStatus.NEED_REVIEW));
 
+        // Filter out finalStatus that are ACCEPTED, REJECTED, or CORRECTED
+        criteria.add(Criteria.where("finalStatus").nin(FinalStatus.ACCEPTED, FinalStatus.REJECTED, FinalStatus.CORRECTED));
+
         // Uncertainty filter
         if (filter != null && filter.getUncertaintyLevel() != null) {
             switch (filter.getUncertaintyLevel()) {

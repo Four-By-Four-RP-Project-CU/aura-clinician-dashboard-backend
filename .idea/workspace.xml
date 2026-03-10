@@ -4,27 +4,37 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e75f38fd-ef06-47d9-b62d-83d65fa4b062" name="Changes" comment="DB connection added">
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/controller/AuditController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/controller/CaseController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/controller/CaseController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/controller/DashboardController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/controller/DashboardController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/AuditMetadata.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/DashboardResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/DashboardResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/PredictionBlock.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/PredictionBlock.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/RecommendationItem.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/RecommendationItem.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/domain/AuditEntry.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/exception/GlobalExceptionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/exception/GlobalExceptionHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/plugin/CuPlugin.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/plugin/CuPlugin.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/repository/AuditRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/repository/InMemoryAuditRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/service/AuditService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/service/CaseService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/service/CaseService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/service/DashboardService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/service/DashboardService.java" afterDir="false" />
+    <list default="true" id="e75f38fd-ef06-47d9-b62d-83d65fa4b062" name="Changes" comment="Feat: some essential files are updated">
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/ResponseDtos/DashboardCurrentDeployedModelResponseDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/ResponseDtos/DashboardDatasetReadinessResponseDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/ResponseDtos/DashboardInsightsResponseDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/ResponseDtos/DashboardLabelCoverageResponseDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/ResponseDtos/DashboardRecentActivityResponseDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/ResponseDtos/DashboardRedeploymentStatusResponseDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/dto/ResponseDtos/DashboardRetrainingCoverageResponseDto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/Enums/FinalStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/Enums/FinalStatus.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/controller/ReviewDashboardController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/api/controller/ReviewDashboardController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/repository/ClinicianFeedbackRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/repository/ClinicianFeedbackRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/repository/Impl/ReviewQueueRepositoryImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/repository/Impl/ReviewQueueRepositoryImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/repository/ModelRegistryRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/repository/ModelRegistryRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/aura/clinician/service/ReviewDashboardService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/aura/clinician/service/ReviewDashboardService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.yml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CopilotPersistence">
+    <persistenceIdMap>
+      <entry key="_/Users/thewandamnidu/Desktop/SLIIT/Y4S1/Research/Project/backend/aura-clinician-dashboard-backend-new" value="37Njx4Jmx8KOCU7vLzFhZ8f4ZQT" />
+    </persistenceIdMap>
+  </component>
+  <component name="Git.Rebase.Settings">
+    <option name="NEW_BASE" value="Feature/ReviewDashboardManagement" />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
@@ -71,8 +81,8 @@
   </component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/Four-By-Four-RP-Project-CU/aura-clinician-dashboard-backend.git&quot;,
-    &quot;accountId&quot;: &quot;6194ae0d-7aa0-47fe-b8f1-e0dca8bd95de&quot;
+    &quot;url&quot;: &quot;git@github.com:Four-By-Four-RP-Project-CU/aura-clinician-dashboard-backend.git&quot;,
+    &quot;accountId&quot;: &quot;4731cb7c-afcb-4487-b6cc-cb5c1f98d9a9&quot;
   }
 }</component>
   <component name="ProjectColorInfo">{
@@ -83,35 +93,44 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Maven.aura-clinician-backend [clean].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.aura-clinician-backend [install].executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
-    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
-    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
-    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;Spring Boot.ClinicianBackendApplication.executor&quot;: &quot;Run&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;clinician-dashboard-explainability&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/pradicksha/Documents/SLIIT/Y4S1/RP/AURA/aura-clinician-dashboard-backend&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;org.jetbrains.plugins.github.ui.GithubSettingsConfigurable&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Maven.aura-clinician-backend [clean].executor": "Run",
+    "Maven.aura-clinician-backend [install].executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "Spring Boot.ClinicianBackendApplication.executor": "Run",
+    "git-widget-placeholder": "Feature/ReviewDashboardManagement",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/Users/thewandamnidu/Desktop/SLIIT/Y4S1/Research/Project/backend/aura-clinician-dashboard-backend-new/src/main/java/com/aura/clinician/images",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "org.jetbrains.plugins.github.ui.GithubSettingsConfigurable",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;mongo&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "mongo"
     ]
   }
-}</component>
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/java/com/aura/clinician/images" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/java/com/aura/clinician/images" />
+    </key>
+  </component>
   <component name="RunManager">
     <configuration name="ClinicianBackendApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
       <envs>
@@ -128,8 +147,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-9823dce3aa75-bf35d07a577b-intellij.indexing.shared.core-IU-252.23892.409" />
-        <option value="bundled-js-predefined-d6986cc7102b-e03c56caf84a-JavaScript-IU-252.23892.409" />
+        <option value="bundled-jdk-9823dce3aa75-fbdcb00ec9e3-intellij.indexing.shared.core-IU-251.27812.49" />
+        <option value="bundled-js-predefined-d6986cc7102b-09060db00ec0-JavaScript-IU-251.27812.49" />
       </set>
     </attachedChunks>
   </component>
@@ -144,6 +163,11 @@
       <workItem from="1766759724994" duration="1340000" />
       <workItem from="1766761444918" duration="12760000" />
       <workItem from="1766900193699" duration="27865000" />
+      <workItem from="1772793536350" duration="15210000" />
+      <workItem from="1772880375385" duration="2664000" />
+      <workItem from="1773017320983" duration="2281000" />
+      <workItem from="1773039791844" duration="2702000" />
+      <workItem from="1773110434808" duration="20000" />
     </task>
     <task id="LOCAL-00001" summary="changes made">
       <option name="closed" value="true" />
@@ -181,6 +205,16 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="changes made" />
     <MESSAGE value="DB connection added" />
-    <option name="LAST_COMMIT_MESSAGE" value="DB connection added" />
+    <MESSAGE value="new" />
+    <MESSAGE value="Feat: some essential files are updated" />
+    <option name="LAST_COMMIT_MESSAGE" value="Feat: some essential files are updated" />
+  </component>
+  <component name="github-copilot-workspace">
+    <instructionFileLocations>
+      <option value=".github/instructions" />
+    </instructionFileLocations>
+    <promptFileLocations>
+      <option value=".github/prompts" />
+    </promptFileLocations>
   </component>
 </project>

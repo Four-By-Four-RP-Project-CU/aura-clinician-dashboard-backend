@@ -4,6 +4,7 @@ import com.aura.clinician.Entities.ClinicianFeedbackEntity;
 import com.aura.clinician.Entities.ModelRegistryEntity;
 import com.aura.clinician.Entities.ReviewQueueRecordEntity;
 import com.aura.clinician.Enums.ClinicianFinalDecision;
+import com.aura.clinician.Enums.FinalStatus;
 import com.aura.clinician.Enums.TrainingStatus;
 import com.aura.clinician.api.dto.FilterDtos.DashboardReviewNeedFilterDto;
 import com.aura.clinician.api.dto.RequestDtos.ClinicianFeedbackRequestDto;
@@ -12,6 +13,7 @@ import com.aura.clinician.api.dto.RequestDtos.RetrainRequestDto;
 import com.aura.clinician.api.dto.ResponseDtos.*;
 import com.aura.clinician.api.dto.RetrainCaseDto;
 import com.aura.clinician.api.dto.ScoreDto;
+import com.aura.clinician.domain.ClinicalReviewDocument;
 import com.aura.clinician.exception.BadRequestException;
 import com.aura.clinician.exception.InternalServerErrorException;
 import com.aura.clinician.exception.NotFoundException;
@@ -37,9 +39,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,6 +56,24 @@ public class ReviewDashboardService {
 
     @Value("${python.service.base-url:http://localhost:8000}")
     private String pythonBaseUrl;
+
+    @Value("${dashboard.cards.retraining.target-cases:10}")
+    private int retrainingTargetCases;
+
+    @Value("${dashboard.cards.label-coverage.target-reviewed-cases:10}")
+    private int labelCoverageTargetReviewedCases;
+
+    @Value("${dashboard.cards.dataset-readiness.target-range-start:2}")
+    private int datasetReadinessRangeStart;
+
+    @Value("${dashboard.cards.dataset-readiness.target-range-end:80}")
+    private int datasetReadinessRangeEnd;
+
+    @Value("${dashboard.cards.retraining.confidence-target-percent:66}")
+    private int confidenceTargetPercent;
+
+    @Value("${dashboard.cards.redeployment.active-learning-enabled:true}")
+    private boolean activeLearningEnabled;
 
     public ReviewQueueResponseDto getReviewQueueRecords(DashboardReviewNeedFilterDto filterDto, Pageable pageable) {
 
@@ -201,6 +221,10 @@ public class ReviewDashboardService {
             }
 
             clinicianFeedbackRepository.save(entity);
+
+            // Update clinical review status
+            updateClinicalReviewStatus(caseId, request.getClinicianFinalDecision(), request.getComment());
+
             log.info("SUCCESS | ReviewDashboardService | submitClinicianFeedback | caseId={} | tookMs={}",
                     caseId, (System.currentTimeMillis() - start));
 
@@ -570,5 +594,264 @@ public class ReviewDashboardService {
                 .build();
     }
 
-}
+    private void updateClinicalReviewStatus(String caseId, ClinicianFinalDecision decision, String comment) {
+        try {
+            // Map ClinicianFinalDecision to FinalStatus
+            FinalStatus finalStatus = mapDecisionToStatus(decision);
 
+            // Keep clinicianFinalStatus in NEED_REVIEW while finalStatus tracks final decision.
+            Query query = new Query(Criteria.where("caseId").is(caseId));
+            Update update = new Update()
+                    .set("clinicianFinalStatus", FinalStatus.NEED_REVIEW.name())
+                    .set("finalStatus", finalStatus.name())
+                    .set("comment", comment)
+                    .set("updatedAt", Instant.now());
+
+            mongoTemplate.updateFirst(query, update, ClinicalReviewDocument.class);
+
+            log.info("Updated clinical review status | caseId={} | status={}", caseId, finalStatus);
+
+        } catch (Exception e) {
+            log.error("Failed to update clinical review status | caseId={}", caseId, e);
+            // Don't throw exception - feedback is still saved, just log the error
+        }
+    }
+
+    private FinalStatus mapDecisionToStatus(ClinicianFinalDecision decision) {
+        switch (decision) {
+            case ACCEPTED:
+                return FinalStatus.ACCEPTED;
+            case CORRECTED:
+                return FinalStatus.CORRECTED;
+            case REJECTED:
+                return FinalStatus.REJECTED;
+            case NEED_REVIEW:
+            default:
+                return FinalStatus.NEED_REVIEW;
+        }
+    }
+
+    public DashboardInsightsResponseDto getDashboardInsights() {
+        DashboardActivityStats stats = loadDashboardActivityStats();
+
+        return DashboardInsightsResponseDto.builder()
+                .retrainingCoverage(buildRetrainingCoverage(stats))
+                .datasetReadiness(buildDatasetReadiness(stats))
+                .recentActivity(buildRecentActivity(stats))
+                .labelCoverage(buildLabelCoverage(stats))
+                .build();
+    }
+
+    private DashboardRetrainingCoverageResponseDto buildRetrainingCoverage(DashboardActivityStats stats) {
+        long retrainedCases = clinicianFeedbackRepository.countByTrainedTrue();
+        long target = Math.max(retrainingTargetCases, 1);
+        // Prefer the latest deployed model for dashboard display.
+        String modelVersion = modelRegistryRepository.findTopByStatusOrderByCreatedAtDesc(TrainingStatus.DEPLOYED)
+                .map(ModelRegistryEntity::getModelVersion)
+                .orElse("N/A");
+
+        return DashboardRetrainingCoverageResponseDto.builder()
+                .retrainedCases(retrainedCases)
+                .targetCases(target)
+                .progressPercent(calculatePercent(retrainedCases, target))
+                .currentModelVersion(modelVersion)
+                .confidenceTargetPercent(confidenceTargetPercent)
+                .lastUpdatedAt(stats.lastUpdatedAt)
+                .build();
+    }
+
+    private DashboardDatasetReadinessResponseDto buildDatasetReadiness(DashboardActivityStats stats) {
+        long totalCases = mongoTemplate.count(new Query(), ClinicalReviewDocument.class);
+        boolean minimumMet = stats.reviewedCount >= datasetReadinessRangeStart
+                && stats.reviewedCount <= datasetReadinessRangeEnd;
+
+        return DashboardDatasetReadinessResponseDto.builder()
+                .reviewedCases(stats.reviewedCount)
+                .totalCases(totalCases)
+                .coverageRatePercent(calculatePercent(stats.reviewedCount, totalCases))
+                .correctionsLogged(stats.correctedCount)
+                .acceptedPredictions(stats.acceptedCount)
+                .targetRangeStart(datasetReadinessRangeStart)
+                .targetRangeEnd(datasetReadinessRangeEnd)
+                .minimumMet(minimumMet)
+                .lastUpdatedAt(stats.lastUpdatedAt)
+                .build();
+    }
+
+    private DashboardRecentActivityResponseDto buildRecentActivity(DashboardActivityStats stats) {
+        return DashboardRecentActivityResponseDto.builder()
+                .reviewedThisCycle(stats.reviewedCount)
+                .acceptedCount(stats.acceptedCount)
+                .correctedCount(stats.correctedCount)
+                .rejectedCount(stats.rejectedCount)
+                .lastUpdatedAt(stats.lastUpdatedAt)
+                .build();
+    }
+
+    private DashboardLabelCoverageResponseDto buildLabelCoverage(DashboardActivityStats stats) {
+        long target = Math.max(labelCoverageTargetReviewedCases, 1);
+
+        return DashboardLabelCoverageResponseDto.builder()
+                .reviewedCases(stats.reviewedCount)
+                .targetReviewedCases(target)
+                .acceptedCount(stats.acceptedCount)
+                .correctedCount(stats.correctedCount)
+                .rejectedCount(stats.rejectedCount)
+                .readyForRetraining(stats.reviewedCount >= target)
+                .lastUpdatedAt(stats.lastUpdatedAt)
+                .build();
+    }
+
+    public DashboardRedeploymentStatusResponseDto getRedeploymentStatus() {
+        // Get the latest deployed model
+        ModelRegistryEntity deployedModel = modelRegistryRepository
+                .findTopByStatusOrderByCreatedAtDesc(TrainingStatus.DEPLOYED)
+                .orElse(null);
+
+        String currentModelVersion = deployedModel != null ? deployedModel.getModelVersion() : "N/A";
+        boolean isLive = deployedModel != null && deployedModel.getStatus() == TrainingStatus.DEPLOYED;
+
+        // Count eligible reviewed cases (ACCEPTED + CORRECTED)
+        long eligibleReviewedCases = clinicianFeedbackRepository.countByClinicianFinalDecisionIn(List.of(
+                ClinicianFinalDecision.ACCEPTED,
+                ClinicianFinalDecision.CORRECTED
+        ));
+
+        // Check if there's a newly trained model ready for deployment
+        boolean updatedModelDeployed = modelRegistryRepository
+                .findTopByStatusOrderByCreatedAtDesc(TrainingStatus.READY)
+                .isPresent();
+
+        // Build status message
+        String statusMessage = isLive
+                ? "Redeployment status: Live and monitoring uncertain cases."
+                : "No deployed model found. Please deploy a model.";
+
+        Instant lastUpdatedAt = deployedModel != null ? deployedModel.getCallbackUpdatedAt() : null;
+
+        return DashboardRedeploymentStatusResponseDto.builder()
+                .currentModelVersion(currentModelVersion)
+                .isLive(isLive)
+                .eligibleReviewedCases(eligibleReviewedCases)
+                .confidenceTargetPercent(confidenceTargetPercent)
+                .updatedModelDeployed(updatedModelDeployed)
+                .activeLearningEnabled(activeLearningEnabled)
+                .redeploymentStatusMessage(statusMessage)
+                .lastUpdatedAt(lastUpdatedAt)
+                .build();
+    }
+
+    public DashboardCurrentDeployedModelResponseDto getCurrentDeployedModelDetails() {
+        ModelRegistryEntity deployedModel = modelRegistryRepository
+                .findTopByStatusOrderByCreatedAtDesc(TrainingStatus.DEPLOYED)
+                .orElse(null);
+
+        if (deployedModel == null) {
+            return DashboardCurrentDeployedModelResponseDto.builder().build();
+        }
+
+        Instant trainedAt = deployedModel.getCallbackUpdatedAt() != null
+                ? deployedModel.getCallbackUpdatedAt()
+                : deployedModel.getCreatedAt();
+
+        Map<String, Object> metrics = deployedModel.getMetrics();
+
+        return DashboardCurrentDeployedModelResponseDto.builder()
+                .modelVersion(deployedModel.getModelVersion())
+                .modelStatus(deployedModel.getStatus())
+                .trainedAt(trainedAt)
+                .trainedCases(deployedModel.getTrainedCases())
+                .accuracyPercent(readPercentMetric(metrics, "accuracy"))
+                .macroF1Percent(readPercentMetric(metrics, "macro_f1", "macroF1", "f1_score"))
+                .stepAccuracyPercent(readPercentMetric(metrics, "step_accuracy", "stepAccuracy", "step_acc"))
+                .featureColumns(deployedModel.getFeatureColumns())
+                .build();
+    }
+
+    private Double readPercentMetric(Map<String, Object> metrics, String... keys) {
+        if (metrics == null || keys == null) {
+            return null;
+        }
+
+        for (String key : keys) {
+            Object raw = metrics.get(key);
+            if (raw == null) {
+                continue;
+            }
+
+            Double value = toDouble(raw);
+            if (value == null) {
+                continue;
+            }
+
+            // If metric stored in 0..1 range convert to percentage.
+            double percent = value <= 1.0D ? value * 100.0D : value;
+            return Math.round(percent * 100.0D) / 100.0D;
+        }
+
+        return null;
+    }
+
+    private Double toDouble(Object raw) {
+        if (raw instanceof Number number) {
+            return number.doubleValue();
+        }
+
+        if (raw instanceof String text) {
+            try {
+                return Double.parseDouble(text);
+            } catch (NumberFormatException ignore) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    private DashboardActivityStats loadDashboardActivityStats() {
+        long accepted = clinicianFeedbackRepository.countByClinicianFinalDecision(ClinicianFinalDecision.ACCEPTED);
+        long corrected = clinicianFeedbackRepository.countByClinicianFinalDecision(ClinicianFinalDecision.CORRECTED);
+        long rejected = clinicianFeedbackRepository.countByClinicianFinalDecision(ClinicianFinalDecision.REJECTED);
+
+        long reviewed = clinicianFeedbackRepository.countByClinicianFinalDecisionIn(List.of(
+                ClinicianFinalDecision.ACCEPTED,
+                ClinicianFinalDecision.CORRECTED,
+                ClinicianFinalDecision.REJECTED
+        ));
+
+        Instant lastUpdatedAt = clinicianFeedbackRepository.findTopByOrderByUpdatedAtDesc()
+                .map(ClinicianFeedbackEntity::getUpdatedAt)
+                .orElse(null);
+
+        return new DashboardActivityStats(reviewed, accepted, corrected, rejected, lastUpdatedAt);
+    }
+
+    private double calculatePercent(long numerator, long denominator) {
+        if (denominator <= 0L || numerator <= 0L) {
+            return 0D;
+        }
+
+        double percent = (numerator * 100D) / denominator;
+        return Math.round(percent * 100.0D) / 100.0D;
+    }
+
+    private static class DashboardActivityStats {
+        private final long reviewedCount;
+        private final long acceptedCount;
+        private final long correctedCount;
+        private final long rejectedCount;
+        private final Instant lastUpdatedAt;
+
+        private DashboardActivityStats(long reviewedCount,
+                                       long acceptedCount,
+                                       long correctedCount,
+                                       long rejectedCount,
+                                       Instant lastUpdatedAt) {
+            this.reviewedCount = reviewedCount;
+            this.acceptedCount = acceptedCount;
+            this.correctedCount = correctedCount;
+            this.rejectedCount = rejectedCount;
+            this.lastUpdatedAt = lastUpdatedAt;
+        }
+    }
+}
