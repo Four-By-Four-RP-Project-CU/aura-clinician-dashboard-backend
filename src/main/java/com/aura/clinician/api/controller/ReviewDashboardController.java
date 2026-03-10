@@ -75,8 +75,46 @@ public class ReviewDashboardController {
         return reviewDashboardService.getModelRegistryDetailsById(id);
     }
 
+    @GetMapping("/insights")
+    public DashboardInsightsResponseDto getDashboardInsights() {
+        log.info("HIT | /api/v1/dashboard-review/insights | GET | getDashboardInsights");
+        return reviewDashboardService.getDashboardInsights();
+    }
 
+    @GetMapping("/insights/retraining-coverage")
+    public DashboardRetrainingCoverageResponseDto getRetrainingCoverage() {
+        log.info("HIT | /api/v1/dashboard-review/insights/retraining-coverage | GET | getRetrainingCoverage");
+        return reviewDashboardService.getDashboardInsights().getRetrainingCoverage();
+    }
 
+    @GetMapping("/insights/dataset-readiness")
+    public DashboardDatasetReadinessResponseDto getDatasetReadiness() {
+        log.info("HIT | /api/v1/dashboard-review/insights/dataset-readiness | GET | getDatasetReadiness");
+        return reviewDashboardService.getDashboardInsights().getDatasetReadiness();
+    }
+
+    @GetMapping("/insights/recent-activity")
+    public DashboardRecentActivityResponseDto getRecentActivity() {
+        log.info("HIT | /api/v1/dashboard-review/insights/recent-activity | GET | getRecentActivity");
+        return reviewDashboardService.getDashboardInsights().getRecentActivity();
+    }
+
+    @GetMapping("/insights/label-coverage")
+    public DashboardLabelCoverageResponseDto getLabelCoverage() {
+        log.info("HIT | /api/v1/dashboard-review/insights/label-coverage | GET | getLabelCoverage");
+        return reviewDashboardService.getDashboardInsights().getLabelCoverage();
+    }
+
+    @GetMapping("/insights/redeployment-status")
+    public DashboardRedeploymentStatusResponseDto getRedeploymentStatus() {
+        log.info("HIT | /api/v1/dashboard-review/insights/redeployment-status | GET | getRedeploymentStatus");
+        return reviewDashboardService.getRedeploymentStatus();
+    }
+
+    @GetMapping("/insights/current-deployed-model")
+    public DashboardCurrentDeployedModelResponseDto getCurrentDeployedModelDetails() {
+        log.info("HIT | /api/v1/dashboard-review/insights/current-deployed-model | GET | getCurrentDeployedModelDetails");
+        return reviewDashboardService.getCurrentDeployedModelDetails();
+    }
 
 }
-

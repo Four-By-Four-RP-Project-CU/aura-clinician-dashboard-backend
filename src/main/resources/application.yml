@@ -31,3 +31,19 @@ management:
 python:
   service:
     base-url : http://localhost:8000
+
+python:
+  service:
+    base-url : http://localhost:8000
+
+python:
+  service:
+    base-url : http://localhost:8000
+
+python:
+  service:
+    base-url : http://localhost:8000
+
+python:
+  service:
+    base-url : http://localhost:8000
