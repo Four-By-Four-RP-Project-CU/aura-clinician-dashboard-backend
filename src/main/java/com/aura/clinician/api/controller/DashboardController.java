@@ -12,23 +12,30 @@ import org.springframework.web.bind.annotation.RestController;
 import com.aura.clinician.api.dto.DashboardResponse;
 import com.aura.clinician.service.DashboardService;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/v1/dashboard")
 @Validated
+@RequiredArgsConstructor
 public class DashboardController {
     private static final Logger logger = LoggerFactory.getLogger(DashboardController.class);
     private final DashboardService dashboardService;
 
-    public DashboardController(DashboardService dashboardService) {
-        this.dashboardService = dashboardService;
-    }
-
     @GetMapping("/{caseId}")
     public DashboardResponse getDashboard(
         @PathVariable String caseId,
-        @RequestParam String diseaseType
+        @RequestParam String diseaseType,
+        @RequestParam(defaultValue = "false") boolean includeExplainability,
+        @RequestParam(defaultValue = "true") boolean includeLlm
     ) {
-        logger.info("HIT - /api/v1/dashboard/{} | req diseaseType={}", caseId, diseaseType);
-        return dashboardService.getDashboard(caseId, diseaseType);
+        logger.info(
+            "HIT - /api/v1/dashboard/{} | req diseaseType={} includeExplainability={} includeLlm={}",
+            caseId,
+            diseaseType,
+            includeExplainability,
+            includeLlm
+        );
+        return dashboardService.getDashboard(caseId, diseaseType, includeExplainability, includeLlm);
     }
 }

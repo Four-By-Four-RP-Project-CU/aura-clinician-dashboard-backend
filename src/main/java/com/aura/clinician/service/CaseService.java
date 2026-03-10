@@ -10,14 +10,13 @@ import com.aura.clinician.api.dto.CaseSummaryResponse;
 import com.aura.clinician.domain.PatientCaseDocument;
 import com.aura.clinician.repository.PatientCaseRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class CaseService {
     private static final Logger logger = LoggerFactory.getLogger(CaseService.class);
     private final PatientCaseRepository patientCaseRepository;
-
-    public CaseService(PatientCaseRepository patientCaseRepository) {
-        this.patientCaseRepository = patientCaseRepository;
-    }
 
     public List<CaseSummaryResponse> getCases() {
         List<PatientCaseDocument> cases = patientCaseRepository.findAll();

@@ -18,20 +18,18 @@ import com.aura.clinician.service.CaseReviewService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import lombok.RequiredArgsConstructor;
+
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/cases")
 @Validated
+@RequiredArgsConstructor
 public class CaseController {
     private static final Logger logger = LoggerFactory.getLogger(CaseController.class);
     private final CaseService caseService;
     private final CaseReviewService caseReviewService;
-
-    public CaseController(CaseService caseService, CaseReviewService caseReviewService) {
-        this.caseService = caseService;
-        this.caseReviewService = caseReviewService;
-    }
 
     @GetMapping
     public List<CaseSummaryResponse> getCases() {
@@ -39,12 +37,13 @@ public class CaseController {
         return caseService.getCases();
     }
 
-    @PostMapping("/{caseId}/review")
+    @PostMapping("/{caseId}/review/{finalStatus}")
     public ClinicalReviewDocument submitReview(
         @PathVariable String caseId,
+        @PathVariable String finalStatus,
         @Valid @RequestBody CaseReviewRequest request
     ) {
-        logger.info("HIT - /api/v1/cases/{}/review | req finalStatus={}", caseId, request.getFinalStatus());
-        return caseReviewService.applyReview(caseId, request.getFinalStatus(), request.getComment());
+        logger.info("HIT - /api/v1/cases/{}/review/{} | req", caseId, finalStatus);
+        return caseReviewService.applyReview(caseId, finalStatus, request.getComment());
     }
 }

@@ -10,13 +10,12 @@ import com.aura.clinician.domain.CaseInputDocument;
 import com.aura.clinician.provider.ScoreProvider;
 import com.aura.clinician.repository.CaseInputRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class CuScoreProvider implements ScoreProvider {
     private final CaseInputRepository caseInputRepository;
-
-    public CuScoreProvider(CaseInputRepository caseInputRepository) {
-        this.caseInputRepository = caseInputRepository;
-    }
 
     @Override
     public List<ScoreItem> getScores(String caseId) {

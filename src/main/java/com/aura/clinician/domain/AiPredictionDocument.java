@@ -1,10 +1,18 @@
 package com.aura.clinician.domain;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
 @Document(collection = "ai_predictions")
 public class AiPredictionDocument {
     @Id
@@ -14,140 +22,206 @@ public class AiPredictionDocument {
     private String subtype;
     private String predictedStep;
     private String predictedDrug;
-    private Double confidence;
+    private Double multimodelConfidence;
+    private Double urticariaTypeConfidence;
     private Double uncertainty;
     private Risks risks;
     private String modelVersion;
     private Instant createdAt;
 
-    public String getId() {
-        return id;
-    }
+    @Field("urticaria_type")
+    private UrticariaType urticariaType;
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    @Field("secondary_disease_risk")
+    private SecondaryDiseaseRisk secondaryDiseaseRisk;
 
-    public String getCaseId() {
-        return caseId;
-    }
+    @Field("sideeffect_risk")
+    private SideEffectRisk sideeffectRisk;
 
-    public void setCaseId(String caseId) {
-        this.caseId = caseId;
-    }
+    @Field("severity")
+    private Severity severity;
+
+    @Field("composite_risk_score")
+    private Double compositeRiskScore;
+
+    @Field("clinical_interpretation")
+    private String clinicalInterpretation;
+
+    @Field("modality_gates")
+    private Map<String, Double> modalityGates;
 
     public String getSubtype() {
-        return subtype;
-    }
-
-    public void setSubtype(String subtype) {
-        this.subtype = subtype;
-    }
-
-    public Double getConfidence() {
-        return confidence;
-    }
-
-    public void setConfidence(Double confidence) {
-        this.confidence = confidence;
-    }
-
-    public Double getUncertainty() {
-        return uncertainty;
-    }
-
-    public void setUncertainty(Double uncertainty) {
-        this.uncertainty = uncertainty;
+        if (subtype != null && !subtype.isBlank()) {
+            return subtype;
+        }
+        if (urticariaType != null && urticariaType.getPredicted() != null && !urticariaType.getPredicted().isBlank()) {
+            return urticariaType.getPredicted();
+        }
+        return null;
     }
 
     public String getPredictedStep() {
-        return predictedStep;
-    }
-
-    public void setPredictedStep(String predictedStep) {
-        this.predictedStep = predictedStep;
+        if (predictedStep != null && !predictedStep.isBlank()) {
+            return predictedStep;
+        }
+        if (severity != null && severity.getBand() != null) {
+            return "SEVERE".equalsIgnoreCase(severity.getBand()) ? "Step-Up" : "Maintain";
+        }
+        return null;
     }
 
     public String getPredictedDrug() {
-        return predictedDrug;
+        if (predictedDrug != null && !predictedDrug.isBlank()) {
+            return predictedDrug;
+        }
+        if (severity != null && severity.getBand() != null) {
+            return "SEVERE".equalsIgnoreCase(severity.getBand())
+                ? "Second-line / biologic therapy consideration"
+                : "Optimize current therapy";
+        }
+        return null;
     }
 
-    public void setPredictedDrug(String predictedDrug) {
-        this.predictedDrug = predictedDrug;
+    public Double getMultimodelConfidence() {
+        if (multimodelConfidence != null) {
+            return multimodelConfidence;
+        }
+        if (urticariaType != null && urticariaType.getConfidencePct() != null) {
+            return urticariaType.getConfidencePct() / 100.0;
+        }
+        return null;
+    }
+
+    public Double getUrticariaTypeConfidence() {
+        if (urticariaTypeConfidence != null) {
+            return urticariaTypeConfidence;
+        }
+        return getMultimodelConfidence();
+    }
+
+    public Double getUncertainty() {
+        if (uncertainty != null) {
+            return uncertainty;
+        }
+        Double confidence = getMultimodelConfidence();
+        return confidence != null ? Math.max(0.0, 1.0 - confidence) : null;
     }
 
     public Risks getRisks() {
-        return risks;
+        if (risks != null) {
+            return risks;
+        }
+        Risks resolved = new Risks();
+
+        if (sideeffectRisk != null) {
+            RiskItem side = new RiskItem();
+            side.setLevel(sideeffectRisk.getLevel());
+            if (sideeffectRisk.getDistribution() != null) {
+                Double high = sideeffectRisk.getDistribution().get("HIGH");
+                Double moderate = sideeffectRisk.getDistribution().get("MODERATE");
+                Double low = sideeffectRisk.getDistribution().get("LOW");
+                if (high != null) {
+                    side.setScore(high / 100.0);
+                } else if (moderate != null) {
+                    side.setScore(moderate / 100.0);
+                } else if (low != null) {
+                    side.setScore(low / 100.0);
+                }
+            }
+            resolved.setSideEffect(side);
+        }
+
+        if (secondaryDiseaseRisk != null) {
+            RiskItem secondary = new RiskItem();
+            Double secondaryScore = secondaryDiseaseRisk.getAutoimmuneRiskPct();
+            if (secondaryScore == null) {
+                secondaryScore = secondaryDiseaseRisk.getThyroidRiskPct();
+            }
+            if (secondaryScore != null) {
+                secondary.setScore(secondaryScore / 100.0);
+                secondary.setLevel(riskLevelFromPercent(secondaryScore));
+            }
+            resolved.setSecondaryDisease(secondary);
+
+            RiskItem hypersensitivity = new RiskItem();
+            Double thyroidScore = secondaryDiseaseRisk.getThyroidRiskPct();
+            if (thyroidScore != null) {
+                hypersensitivity.setScore(thyroidScore / 100.0);
+                hypersensitivity.setLevel(riskLevelFromPercent(thyroidScore));
+            }
+            resolved.setHypersensitivity(hypersensitivity);
+        }
+
+        return resolved;
     }
 
-    public void setRisks(Risks risks) {
-        this.risks = risks;
+    private String riskLevelFromPercent(Double value) {
+        if (value == null) {
+            return null;
+        }
+        if (value >= 70.0) {
+            return "HIGH";
+        }
+        if (value >= 35.0) {
+            return "MEDIUM";
+        }
+        return "LOW";
     }
 
-    public String getModelVersion() {
-        return modelVersion;
-    }
-
-    public void setModelVersion(String modelVersion) {
-        this.modelVersion = modelVersion;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
+    @Data
+    @NoArgsConstructor
     public static class Risks {
         private RiskItem sideEffect;
         private RiskItem hypersensitivity;
         private RiskItem secondaryDisease;
-
-        public RiskItem getSideEffect() {
-            return sideEffect;
-        }
-
-        public void setSideEffect(RiskItem sideEffect) {
-            this.sideEffect = sideEffect;
-        }
-
-        public RiskItem getHypersensitivity() {
-            return hypersensitivity;
-        }
-
-        public void setHypersensitivity(RiskItem hypersensitivity) {
-            this.hypersensitivity = hypersensitivity;
-        }
-
-        public RiskItem getSecondaryDisease() {
-            return secondaryDisease;
-        }
-
-        public void setSecondaryDisease(RiskItem secondaryDisease) {
-            this.secondaryDisease = secondaryDisease;
-        }
     }
 
+    @Data
+    @NoArgsConstructor
     public static class RiskItem {
         private String level;
         private Double score;
+    }
 
-        public String getLevel() {
-            return level;
-        }
+    @Data
+    @NoArgsConstructor
+    public static class UrticariaType {
+        private String predicted;
+        @Field("confidence_pct")
+        private Double confidencePct;
+        private Map<String, Double> distribution = new LinkedHashMap<>();
+    }
 
-        public void setLevel(String level) {
-            this.level = level;
-        }
+    @Data
+    @NoArgsConstructor
+    public static class SecondaryDiseaseRisk {
+        @Field("thyroid_risk_pct")
+        private Double thyroidRiskPct;
+        @Field("autoimmune_risk_pct")
+        private Double autoimmuneRiskPct;
+        @Field("thyroid_flag")
+        private Boolean thyroidFlag;
+        @Field("autoimmune_flag")
+        private Boolean autoimmuneFlag;
+    }
 
-        public Double getScore() {
-            return score;
-        }
+    @Data
+    @NoArgsConstructor
+    public static class SideEffectRisk {
+        private String level;
+        private Map<String, Double> distribution = new LinkedHashMap<>();
+        @Field("high_risk_flag")
+        private Boolean highRiskFlag;
+    }
 
-        public void setScore(Double score) {
-            this.score = score;
-        }
+    @Data
+    @NoArgsConstructor
+    public static class Severity {
+        @Field("predicted_score")
+        private Double predictedScore;
+        @Field("uncertainty_95ci")
+        private java.util.List<Double> uncertainty95ci;
+        private String band;
+        private String description;
     }
 }

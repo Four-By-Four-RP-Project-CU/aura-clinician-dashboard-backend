@@ -11,13 +11,12 @@ import com.aura.clinician.api.dto.RecommendationItem;
 import com.aura.clinician.domain.GuidelineRuleDocument;
 import com.aura.clinician.repository.GuidelineRuleRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class GuidelineMapper {
     private final GuidelineRuleRepository guidelineRuleRepository;
-
-    public GuidelineMapper(GuidelineRuleRepository guidelineRuleRepository) {
-        this.guidelineRuleRepository = guidelineRuleRepository;
-    }
 
     public List<RecommendationItem> map(
         String diseaseType,

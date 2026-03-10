@@ -15,7 +15,10 @@ import com.aura.clinician.provider.GuidelineProvider;
 import com.aura.clinician.provider.PredictionProvider;
 import com.aura.clinician.provider.ScoreProvider;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class CuPlugin implements DiseaseModule {
     private static final String DISEASE_TYPE = "CU";
     private static final double LOW_CONFIDENCE_THRESHOLD = 0.70;
@@ -24,18 +27,6 @@ public class CuPlugin implements DiseaseModule {
     private final ScoreProvider scoreProvider;
     private final ExplainabilityProvider explainabilityProvider;
     private final GuidelineProvider guidelineProvider;
-
-    public CuPlugin(
-        PredictionProvider predictionProvider,
-        ScoreProvider scoreProvider,
-        ExplainabilityProvider explainabilityProvider,
-        GuidelineProvider guidelineProvider
-    ) {
-        this.predictionProvider = predictionProvider;
-        this.scoreProvider = scoreProvider;
-        this.explainabilityProvider = explainabilityProvider;
-        this.guidelineProvider = guidelineProvider;
-    }
 
     @Override
     public boolean supports(String diseaseType) {
