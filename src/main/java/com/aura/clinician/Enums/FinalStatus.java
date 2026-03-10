@@ -2,5 +2,7 @@ package com.aura.clinician.Enums;
 
 public enum FinalStatus {
     NEED_REVIEW,
-    ACCEPTED
+    ACCEPTED,
+    CORRECTED,
+    REJECTED
 }
