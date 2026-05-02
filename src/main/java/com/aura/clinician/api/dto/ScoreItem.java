@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 public class ScoreItem {
     private String code;
     private String label;
-    private double value;
+    private Double value;
     private String interpretation;
     private boolean warning;
 }
