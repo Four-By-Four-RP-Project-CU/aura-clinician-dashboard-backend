@@ -18,6 +18,10 @@ HTTP Basic auth with role-based access.
 
 ## Endpoints
 - `GET /api/v1/cases`
+- `POST /api/v1/cases/{caseId}/review`
 - `GET /api/v1/dashboard/{caseId}?diseaseType=CU`
-- `POST /api/v1/feedback` (clinician review action)
 - `GET /api/v1/audit/{caseId}`
+
+## Mongo collections
+- `case_inputs` — input data for dashboards (from previous operations)
+- `cases` — stored case decisions (status/comment/timestamps)
