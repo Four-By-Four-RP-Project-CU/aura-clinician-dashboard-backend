@@ -4,7 +4,7 @@ server:
 explainability:
   service:
     url: ${EXPLAINABILITY_SERVICE_URL:http://localhost:8001}
-    api-key: ${EXPLAINABILITY_API_KEY:}
+    api-key: ${EXPLAINABILITY_API_KEY:dev-key}
   cache:
     ttl-seconds: ${EXPLAINABILITY_CACHE_TTL_SECONDS:900}
 
@@ -13,12 +13,9 @@ llm:
     base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai}
     chat-path: ${OPENROUTER_CHAT_PATH:/api/v1/chat/completions}
     model: ${OPENROUTER_MODEL:google/gemini-3.1-flash-lite-preview}
-    api-key: ${OPENROUTER_API_KEY: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}
+    api-key: ${OPENROUTER_API_KEY}
     timeout-seconds: ${OPENROUTER_TIMEOUT_SECONDS:20}
     temperature: ${OPENROUTER_TEMPERATURE:0.1}
-
-#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 - open router
-#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 - chatgpt
 
 spring:
   data:
@@ -30,3 +27,7 @@ management:
     web:
       exposure:
         include: health,info
+
+python:
+  service:
+    base-url : http://localhost:8000
