@@ -56,14 +56,15 @@ public class CaseReviewService {
         boolean gradCamAvailable = gradCam != null
             && (gradCam.getHeatmapUrl() != null || gradCam.getBaseImageUrl() != null);
 
-        // Resolve base64 images from GridFS asset_refs
+        // gradCamHeatMapImage: fetch directly from the explainability service URL
+        String gradCamBase64 = imageBase64Service.urlToBase64DataUri(
+            gradCam != null ? gradCam.getHeatmapUrl() : null);
+
+        // images (input image): load from GridFS via asset_refs
         PrescriptionResultDocument prescription =
             prescriptionResultRepository.findByCaseId(caseId).orElse(null);
-        String gradCamBase64 = resolveBase64(prescription, "gradcam",
-            gradCam != null ? gradCam.getHeatmapUrl() : null);
         String inputImageBase64 = resolveBase64(prescription, "input_asset",
-            gradCam != null ? gradCam.getBaseImageUrl()
-                : (patientCase != null ? patientCase.getImagePath() : null));
+            patientCase != null ? patientCase.getImagePath() : null);
 
         AiPredictionDocument.Risks risks = prediction != null ? prediction.getRisks() : null;
         List<ClinicalReviewDocument.RiskEntry> riskEntries = new ArrayList<>();
@@ -166,11 +167,10 @@ public class CaseReviewService {
     }
 
     /**
-     * Resolves a base64 data URI for an image.
-     * Priority: GridFS fileId from asset_refs → GridFS fileId parsed from fallback URL.
+     * Resolves the input image as a base64 data URI.
+     * Priority: GridFS fileId from asset_refs (by kind) → GridFS fileId parsed from fallback URL.
      */
     private String resolveBase64(PrescriptionResultDocument prescription, String kind, String fallbackUrl) {
-        // 1. Try GridFS directly via asset_refs
         if (prescription != null) {
             String fileId = prescription.getAssetFileIdByKind(kind);
             if (fileId != null) {
@@ -178,7 +178,7 @@ public class CaseReviewService {
                 if (b64 != null) return b64;
             }
         }
-        // 2. Parse fileId from a URL like .../gridfs/{fileId}
+        // Fall back: parse fileId from URL like .../gridfs/{fileId}
         if (fallbackUrl != null) {
             int idx = fallbackUrl.lastIndexOf("/gridfs/");
             if (idx >= 0) {
