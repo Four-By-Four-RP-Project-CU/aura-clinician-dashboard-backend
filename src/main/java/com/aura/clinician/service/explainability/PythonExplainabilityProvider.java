@@ -128,10 +128,13 @@ public class PythonExplainabilityProvider implements ExplainabilityProvider {
                 if (body.getBaseImageUrl() != null) {
                     artifact.setBaseImageUrl(body.getBaseImageUrl());
                 }
-                if (body.getHeatmapUrl() != null) {
-                    artifact.setHeatmapUrl(body.getHeatmapUrl());
+                // Prefer overlay (heatmap blended onto original image) for display.
+                // Fall back to raw heatmap if overlay is unavailable.
+                String displayUrl = body.getOverlayUrl() != null ? body.getOverlayUrl() : body.getHeatmapUrl();
+                if (displayUrl != null) {
+                    artifact.setHeatmapUrl(displayUrl);
                 }
-                logger.info("Grad-CAM heatmap ready for caseId={} heatmapUrl={}", caseId, body.getHeatmapUrl());
+                logger.info("Grad-CAM ready for caseId={} overlayUrl={} heatmapUrl={}", caseId, body.getOverlayUrl(), body.getHeatmapUrl());
             }
             gradcamCache.put(gradcamCacheKey, new CacheEntry<>(artifact, expiresAtMillis()));
         } catch (Exception ex) {
@@ -214,6 +217,8 @@ public class PythonExplainabilityProvider implements ExplainabilityProvider {
         private boolean gradCamAvailable;
         private String heatmapPath;
         private String heatmapUrl;
+        private String overlayPath;
+        private String overlayUrl;
         private String baseImagePath;
         private String baseImageUrl;
         private String error;
