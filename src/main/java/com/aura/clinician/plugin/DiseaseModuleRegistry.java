@@ -6,13 +6,12 @@ import org.springframework.stereotype.Component;
 
 import com.aura.clinician.exception.DiseaseModuleNotFoundException;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class DiseaseModuleRegistry {
     private final List<DiseaseModule> modules;
-
-    public DiseaseModuleRegistry(List<DiseaseModule> modules) {
-        this.modules = modules;
-    }
 
     public DiseaseModule getModule(String diseaseType) {
         return modules.stream()
