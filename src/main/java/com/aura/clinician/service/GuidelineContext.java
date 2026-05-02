@@ -6,8 +6,8 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public class GuidelineContext {
-    private final int uctTotal;
-    private final int aectTotal;
+    private final Integer uctTotal;
+    private final Integer aectTotal;
     private final Double confidence;
     private final String predictedStep;
     private final String sideEffectLevel;

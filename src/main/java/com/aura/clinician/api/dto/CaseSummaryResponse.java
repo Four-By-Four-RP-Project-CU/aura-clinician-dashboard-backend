@@ -7,6 +7,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CaseSummaryResponse {
     private String caseId;
-    private int age;
+    private Integer age;
     private String gender;
 }

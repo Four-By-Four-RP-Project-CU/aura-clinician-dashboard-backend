@@ -5,9 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.aura.clinician.api.dto.JustificationItem;
 import com.aura.clinician.api.dto.RecommendationItem;
@@ -15,9 +13,9 @@ import com.aura.clinician.api.dto.ShapContribution;
 import com.aura.clinician.domain.AiPredictionDocument;
 import com.aura.clinician.domain.ClinicalReviewDocument;
 import com.aura.clinician.domain.PatientCaseDocument;
-import com.aura.clinician.repository.AiPredictionRepository;
+import com.aura.clinician.domain.PrescriptionResultDocument;
 import com.aura.clinician.repository.ClinicalReviewRepository;
-import com.aura.clinician.repository.PatientCaseRepository;
+import com.aura.clinician.repository.PrescriptionResultRepository;
 import com.aura.clinician.service.explainability.ExplainabilityProvider;
 
 import lombok.RequiredArgsConstructor;
@@ -25,24 +23,24 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class CaseReviewService {
-    private final PatientCaseRepository patientCaseRepository;
-    private final AiPredictionRepository aiPredictionRepository;
+    private final CaseContextService caseContextService;
     private final ClinicalReviewRepository clinicalReviewRepository;
+    private final PrescriptionResultRepository prescriptionResultRepository;
+    private final ImageBase64Service imageBase64Service;
     private final ExplainabilityProvider explainabilityProvider;
     private final GuidelineMapper guidelineMapper;
     private final JustificationService justificationService;
 
     public ClinicalReviewDocument applyReview(String caseId, String finalStatus, String comment) {
-        PatientCaseDocument patientCase = patientCaseRepository.findByCaseId(caseId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient case not found"));
-        AiPredictionDocument prediction = aiPredictionRepository.findByCaseId(caseId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "AI prediction not found"));
+        CaseContextService.CaseContext caseContext = caseContextService.getCaseContext(caseId);
+        PatientCaseDocument patientCase = caseContext.getPatientCase();
+        AiPredictionDocument prediction = caseContext.getPrediction();
 
-        int uctTotal = sumRequired(patientCase.getUct());
-        int aectTotal = sumRequired(patientCase.getAect());
+        Integer uctTotal = caseContext.getUctTotal();
+        Integer aectTotal = caseContext.getAectTotal();
 
-        ClinicalReviewDocument.ScoreEntry uct = buildScoreEntry(patientCase.getUct(), uctTotal);
-        ClinicalReviewDocument.ScoreEntry aect = buildScoreEntry(patientCase.getAect(), aectTotal);
+        ClinicalReviewDocument.ScoreEntry uct = buildScoreEntry(uctTotal);
+        ClinicalReviewDocument.ScoreEntry aect = buildScoreEntry(aectTotal);
 
         List<ShapContribution> shapContributions = explainabilityProvider.getShap(caseId, patientCase);
         List<ClinicalReviewDocument.ShapScore> shapScores = shapContributions.stream()
@@ -58,7 +56,17 @@ public class CaseReviewService {
         boolean gradCamAvailable = gradCam != null
             && (gradCam.getHeatmapUrl() != null || gradCam.getBaseImageUrl() != null);
 
-        AiPredictionDocument.Risks risks = prediction.getRisks();
+        // gradCamHeatMapImage: fetch directly from the explainability service URL
+        String gradCamBase64 = imageBase64Service.urlToBase64DataUri(
+            gradCam != null ? gradCam.getHeatmapUrl() : null);
+
+        // images (input image): load from GridFS via asset_refs
+        PrescriptionResultDocument prescription =
+            prescriptionResultRepository.findByCaseId(caseId).orElse(null);
+        String inputImageBase64 = resolveBase64(prescription, "input_asset",
+            patientCase != null ? patientCase.getImagePath() : null);
+
+        AiPredictionDocument.Risks risks = prediction != null ? prediction.getRisks() : null;
         List<ClinicalReviewDocument.RiskEntry> riskEntries = new ArrayList<>();
         riskEntries.add(buildRisk("SIDE_EFFECT", risks != null ? risks.getSideEffect() : null));
         riskEntries.add(buildRisk("HYPERSENSITIVITY", risks != null ? risks.getHypersensitivity() : null));
@@ -68,18 +76,18 @@ public class CaseReviewService {
         GuidelineContext guidelineContext = new GuidelineContext(
             uctTotal,
             aectTotal,
-            prediction.getMultimodelConfidence(),
-            prediction.getPredictedStep(),
+            prediction != null ? prediction.getMultimodelConfidence() : null,
+            prediction != null ? prediction.getPredictedStep() : null,
             riskLevel(risks, "sideEffect"),
             riskScore(risks, "sideEffect"),
             riskLevel(risks, "hypersensitivity"),
             riskScore(risks, "hypersensitivity"),
             riskLevel(risks, "secondaryDisease"),
             riskScore(risks, "secondaryDisease"),
-            patientCase.getDailyActivityImpact()
+            patientCase != null ? patientCase.getDailyActivityImpact() : null
         );
         List<RecommendationItem> recommendations = guidelineMapper.map(
-            patientCase.getDiseaseType(),
+            patientCase != null && patientCase.getDiseaseType() != null ? patientCase.getDiseaseType() : "CU",
             guidelineContext,
             justifications
         );
@@ -91,26 +99,24 @@ public class CaseReviewService {
 
         ClinicalReviewDocument review = new ClinicalReviewDocument();
         review.setCaseId(caseId);
-        review.setPatientAge(patientCase.getAgeYears());
-        review.setPatientGender(patientCase.getSex());
-        review.setHospital(patientCase.getHospital());
-        review.setVisitDate(patientCase.getCreatedAt() != null ? patientCase.getCreatedAt() : Instant.now());
-        review.setSymptoms(buildSymptoms(patientCase.getSymptoms()));
-        review.setUrticariaType(prediction.getSubtype());
-        review.setShapeAvailable(patientCase.getShape());
+        review.setPatientAge(patientCase != null ? patientCase.getAgeYears() : null);
+        review.setPatientGender(patientCase != null ? patientCase.getSex() : null);
+        review.setHospital(patientCase != null ? patientCase.getHospital() : null);
+        review.setVisitDate(caseContext.getVisitInstant() != null ? caseContext.getVisitInstant() : Instant.now());
+        review.setSymptoms(patientCase != null ? buildSymptoms(patientCase.getSymptoms()) : null);
+        review.setUrticariaType(prediction != null ? prediction.getSubtype() : null);
+        review.setShapeAvailable(patientCase != null ? patientCase.getShape() : null);
         review.setUct(uct);
         review.setAect(aect);
         review.setGradCamAvailable(gradCamAvailable);
-        review.setGradCamHeatMapImage(gradCam != null ? gradCam.getHeatmapUrl() : null);
-        review.setImages(gradCam != null && gradCam.getBaseImageUrl() != null
-            ? gradCam.getBaseImageUrl()
-            : patientCase.getImagePath());
+        review.setGradCamHeatMapImage(gradCamBase64);
+        review.setImages(inputImageBase64);
         review.setShapScores(shapScores);
-        review.setOverallConfidenceScore(prediction.getUrticariaTypeConfidence());
+        review.setOverallConfidenceScore(prediction != null ? prediction.getUrticariaTypeConfidence() : null);
         review.setRisks(riskEntries);
-        review.setPredictedDrug(prediction.getPredictedDrug());
-        review.setPredictedStep(prediction.getPredictedStep());
-        review.setConfidencePredictedDrugStep(prediction.getMultimodelConfidence());
+        review.setPredictedDrug(prediction != null ? prediction.getPredictedDrug() : null);
+        review.setPredictedStep(prediction != null ? prediction.getPredictedStep() : null);
+        review.setConfidencePredictedDrugStep(prediction != null ? prediction.getMultimodelConfidence() : null);
         review.setRecommendations(recommendationText);
         review.setClinicianFinalStatus(finalStatus);
         review.setComment(comment);
@@ -122,23 +128,9 @@ public class CaseReviewService {
         return clinicalReviewRepository.save(review);
     }
 
-    private int sumRequired(PatientCaseDocument.QuestionnaireScore score) {
-        if (score == null || score.getQ1() == null || score.getQ2() == null || score.getQ3() == null || score.getQ4() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "UCT/AECT scores are incomplete");
-        }
-        return score.getQ1() + score.getQ2() + score.getQ3() + score.getQ4();
-    }
-
-    private ClinicalReviewDocument.ScoreEntry buildScoreEntry(
-        PatientCaseDocument.QuestionnaireScore score,
-        int total
-    ) {
+    private ClinicalReviewDocument.ScoreEntry buildScoreEntry(Integer total) {
         ClinicalReviewDocument.ScoreEntry entry = new ClinicalReviewDocument.ScoreEntry();
         entry.setTotalScore(total);
-        entry.setQ1(score.getQ1());
-        entry.setQ2(score.getQ2());
-        entry.setQ3(score.getQ3());
-        entry.setQ4(score.getQ4());
         return entry;
     }
 
@@ -172,6 +164,30 @@ public class CaseReviewService {
             case "secondaryDisease" -> risks.getSecondaryDisease();
             default -> null;
         };
+    }
+
+    /**
+     * Resolves the input image as a base64 data URI.
+     * Priority: GridFS fileId from asset_refs (by kind) → GridFS fileId parsed from fallback URL.
+     */
+    private String resolveBase64(PrescriptionResultDocument prescription, String kind, String fallbackUrl) {
+        if (prescription != null) {
+            String fileId = prescription.getAssetFileIdByKind(kind);
+            if (fileId != null) {
+                String b64 = imageBase64Service.toBase64DataUri(fileId);
+                if (b64 != null) return b64;
+            }
+        }
+        // Fall back: parse fileId from URL like .../gridfs/{fileId}
+        if (fallbackUrl != null) {
+            int idx = fallbackUrl.lastIndexOf("/gridfs/");
+            if (idx >= 0) {
+                String fileId = fallbackUrl.substring(idx + "/gridfs/".length());
+                String b64 = imageBase64Service.toBase64DataUri(fileId);
+                if (b64 != null) return b64;
+            }
+        }
+        return null;
     }
 
     private String buildSymptoms(PatientCaseDocument.Symptoms symptoms) {
