@@ -13,16 +13,16 @@ public class JustificationService {
     private static final String DEFAULT_GUIDELINE = "EAACI";
 
     public List<JustificationItem> buildJustifications(
-        int uctTotal,
-        int aectTotal,
+        Integer uctTotal,
+        Integer aectTotal,
         AiPredictionDocument prediction
     ) {
         List<JustificationItem> justifications = new ArrayList<>();
 
-        if (uctTotal < 12) {
+        if (uctTotal != null && uctTotal < 12) {
             justifications.add(build("Poor disease control indicated by UCT score.", "CAUTION"));
         }
-        if (aectTotal < 10) {
+        if (aectTotal != null && aectTotal < 10) {
             justifications.add(build("Angioedema control is below target per AECT score.", "CAUTION"));
         }
 

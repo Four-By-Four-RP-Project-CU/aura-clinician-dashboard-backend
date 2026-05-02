@@ -7,8 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.aura.clinician.api.dto.CaseSummaryResponse;
-import com.aura.clinician.domain.PatientCaseDocument;
-import com.aura.clinician.repository.PatientCaseRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -16,21 +14,27 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CaseService {
     private static final Logger logger = LoggerFactory.getLogger(CaseService.class);
-    private final PatientCaseRepository patientCaseRepository;
+    private final CaseContextService caseContextService;
 
     public List<CaseSummaryResponse> getCases() {
-        List<PatientCaseDocument> cases = patientCaseRepository.findAll();
-        logger.info("Loaded {} patient_cases records", cases.size());
+        List<CaseContextService.CaseContext> cases = caseContextService.getAllCaseContexts();
+        logger.info("Loaded {} case contexts from risk_results/prescription_results", cases.size());
         return cases.stream()
             .map(this::toResponse)
             .toList();
     }
 
-    private CaseSummaryResponse toResponse(PatientCaseDocument summary) {
+    private CaseSummaryResponse toResponse(CaseContextService.CaseContext context) {
         CaseSummaryResponse response = new CaseSummaryResponse();
-        response.setCaseId(summary.getCaseId());
-        response.setAge(summary.getAgeYears());
-        response.setGender(summary.getSex());
+        response.setCaseId(context.getCaseId());
+        response.setAge(context.getPatientCase() != null ? context.getPatientCase().getAgeYears() : null);
+        response.setGender(
+            context.getPatientCase() != null
+                && context.getPatientCase().getSex() != null
+                && !context.getPatientCase().getSex().isBlank()
+                    ? context.getPatientCase().getSex()
+                    : "Unknown"
+        );
         return response;
     }
 }

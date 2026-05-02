@@ -74,7 +74,7 @@ public class PythonExplainabilityProvider implements ExplainabilityProvider {
 
             ShapResponse body = response.getBody();
             if (body == null || body.getShapScores() == null) {
-                return List.of();
+                return heuristicFallback(patientCase);
             }
             List<ShapContribution> contributions = new ArrayList<>();
             for (ShapScore score : body.getShapScores()) {
@@ -84,11 +84,14 @@ public class PythonExplainabilityProvider implements ExplainabilityProvider {
                 item.setDirection(score.getContribution() >= 0 ? "POSITIVE" : "NEGATIVE");
                 contributions.add(item);
             }
+            if (contributions.isEmpty()) {
+                contributions = heuristicFallback(patientCase);
+            }
             shapCache.put(caseId, new CacheEntry<>(contributions, expiresAtMillis()));
             return contributions;
         } catch (Exception ex) {
             logger.warn("SHAP service unavailable for caseId={}", caseId);
-            return List.of();
+            return heuristicFallback(patientCase);
         }
     }
 
@@ -150,19 +153,47 @@ public class PythonExplainabilityProvider implements ExplainabilityProvider {
 
     private Map<String, Object> buildFeatureMap(PatientCaseDocument patientCase) {
         Map<String, Object> features = new LinkedHashMap<>();
-        features.put("age", patientCase.getAgeYears());
+        putIfPresent(features, "age", patientCase.getAgeYears());
         if (patientCase.getLabs() != null) {
-            features.put("CRP", patientCase.getLabs().getCrp());
-            features.put("IgE", patientCase.getLabs().getIgE());
-            features.put("VitD", patientCase.getLabs().getVitD());
+            putIfPresent(features, "CRP", patientCase.getLabs().getCrp());
+            putIfPresent(features, "IgE", patientCase.getLabs().getIgE());
+            putIfPresent(features, "VitD", patientCase.getLabs().getVitD());
         }
         if (patientCase.getSymptoms() != null) {
-            features.put("itchingScore", parseNumeric(patientCase.getSymptoms().getItchingScore()));
-            features.put("angioedemaPresent", patientCase.getSymptoms().getAngioedemaPresent());
+            putIfPresent(features, "itchingScore", parseNumeric(patientCase.getSymptoms().getItchingScore()));
+            putIfPresent(features, "angioedemaPresent", patientCase.getSymptoms().getAngioedemaPresent());
         }
-        features.put("uctTotal", sumScores(patientCase.getUct()));
-        features.put("aectTotal", sumScores(patientCase.getAect()));
+        putIfPresent(features, "uctTotal", sumScores(patientCase.getUct()));
+        putIfPresent(features, "aectTotal", sumScores(patientCase.getAect()));
         return features;
+    }
+
+    private void putIfPresent(Map<String, Object> target, String key, Object value) {
+        if (value != null) {
+            target.put(key, value);
+        }
+    }
+
+    private List<ShapContribution> heuristicFallback(PatientCaseDocument patientCase) {
+        List<ShapContribution> contributions = new ArrayList<>();
+        if (patientCase == null) {
+            return contributions;
+        }
+        if (patientCase.getLabs() != null) {
+            addContribution(contributions, "IgE", scale(patientCase.getLabs().getIgE(), 1000.0));
+            addContribution(contributions, "CRP", scale(patientCase.getLabs().getCrp(), 20.0));
+            addContribution(contributions, "VitD", invertScale(patientCase.getLabs().getVitD(), 40.0));
+        }
+        addContribution(contributions, "Age", scale(asDouble(patientCase.getAgeYears()), 100.0));
+        Integer uctTotal = sumScores(patientCase.getUct());
+        if (uctTotal != null) {
+            addContribution(contributions, "UCT Total", invertScale(uctTotal.doubleValue(), 16.0));
+        }
+        Integer aectTotal = sumScores(patientCase.getAect());
+        if (aectTotal != null) {
+            addContribution(contributions, "AECT Total", invertScale(aectTotal.doubleValue(), 16.0));
+        }
+        return contributions;
     }
 
     private Integer sumScores(PatientCaseDocument.QuestionnaireScore score) {
@@ -185,6 +216,39 @@ public class PythonExplainabilityProvider implements ExplainabilityProvider {
         } catch (NumberFormatException ex) {
             return null;
         }
+    }
+
+    private Double asDouble(Integer value) {
+        return value != null ? value.doubleValue() : null;
+    }
+
+    private void addContribution(List<ShapContribution> contributions, String feature, Double value) {
+        if (value == null) {
+            return;
+        }
+        ShapContribution item = new ShapContribution();
+        item.setFeature(feature);
+        item.setContribution(round(value));
+        item.setDirection(value >= 0 ? "POSITIVE" : "NEGATIVE");
+        contributions.add(item);
+    }
+
+    private Double scale(Double value, double max) {
+        if (value == null) {
+            return null;
+        }
+        return Math.min(value / max, 1.0);
+    }
+
+    private Double invertScale(Double value, double max) {
+        if (value == null) {
+            return null;
+        }
+        return 1.0 - Math.min(value / max, 1.0);
+    }
+
+    private double round(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 
     private HttpHeaders buildHeaders() {

@@ -20,7 +20,7 @@ public class SecurityConfig {
             .cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/actuator/health", "/error").permitAll()
+                .requestMatchers("/actuator/health", "/error", "/api/v1/images/gridfs/**").permitAll()
                 .anyRequest().hasRole("CLINICIAN") // Role-based access for clinical users.
             )
             .httpBasic(Customizer.withDefaults());
